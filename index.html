@@ -25,6 +25,7 @@
 .category-stat .bar{margin-top:6px}
 .category-stat span{font-variant-numeric:tabular-nums;font-weight:700}
 @media(max-width:480px){.task-grid{grid-template-columns:1fr}.task-grid .wide{grid-column:auto}.task-card{padding:12px}}
+.replan-panel{border:1px solid #cedaf1;background:#f7faff;border-radius:15px;padding:16px;margin:17px 0}.replan-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.replan-output{white-space:pre-line;line-height:1.8;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}.replan-log{font-size:12px;color:var(--muted);margin-top:12px}.replan-log section{padding:8px 0;border-bottom:1px solid var(--line)}@media(max-width:480px){.replan-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body><main class="shell">
@@ -34,6 +35,13 @@
 <div class="card"><div class="card-head"><h2>今日朝活</h2><input class="input date" type="date" id="date" aria-label="记录日期"></div>
 <div class="field-grid"><div class="field"><label for="wake">起床时间</label><input class="input" type="time" id="wake"></div><div class="field"><label for="leave">出门时间</label><input class="input" type="time" id="leave"></div><div class="field"><label for="arrive">星巴克到达</label><input class="input" type="time" id="arrive"></div></div>
 <p class="hint">按到达时间自动计算晨间日记15分钟、背单词10分钟，随后安排学习任务。计划时间不等于实际完成时间。</p><hr class="section-sep"><ol class="timeline" id="timeline"></ol>
+<div class="replan-panel"><div class="task-head"><h3>现在重新安排</h3><span class="pill">保留原计划</span></div><p class="hint">只重新安排未完成任务。先预览，再确认；实际学习分钟数需要手动填写。</p><div class="replan-grid">
+<div class="field"><label>重新开始时间</label><input class="input" id="replanNow" type="time"></div><div class="field"><label>最晚结束时间</label><input class="input" id="replanEnd" type="time" value="08:45"></div>
+<div class="field"><label>未完成的日记</label><select class="input" id="journalChoice"><option value="skip">跳过</option><option value="short">缩短为5分钟</option><option value="keep">保留15分钟</option><option value="later">延期</option></select></div>
+<div class="field"><label>未完成的单词</label><select class="input" id="vocabChoice"><option value="keep">保留10分钟</option><option value="short">缩短为5分钟</option><option value="later">延期</option><option value="skip">跳过</option></select></div></div>
+<div class="field" style="margin-top:12px"><label>调整原因（可选）</label><input class="input" id="replanReason" placeholder="例如：修改网站占用了时间"></div>
+<div class="actions" style="margin-top:12px"><button class="btn" id="replanNowBtn" type="button">读取当前时间</button><button class="btn primary" id="replanPreviewBtn" type="button">预览新安排</button><button class="btn" id="replanApplyBtn" type="button" disabled>确认调整</button></div>
+<div id="replanOutput" class="replan-output" hidden></div><div id="replanLog" class="replan-log"></div></div>
 <div class="mini-row" style="margin-top:12px"><label class="checkbox"><input type="checkbox" id="journalDone">日记已完成</label><label class="checkbox"><input type="checkbox" id="vocabDone">背单词已完成</label></div></div>
 <div class="card"><div class="task-head"><div><h2>学习任务</h2><p class="hint">随时添加或删除任务，组合任务名称，记录实际时间和感想。</p></div><button type="button" class="btn primary" id="addTask">＋ 添加任务</button></div>
 <div id="taskList" class="task-list"></div>
@@ -69,11 +77,11 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const str=s=>typeof s==='string'?s:'';
 const nonneg=s=>{if(s===''||s===null||s===undefined)return null;const x=Number(s);return Number.isFinite(x)&&x>=0&&x<=1440?x:null};
 const readTags=x=>{try{const v=Array.isArray(x)?x:JSON.parse(x||'[]');return Array.isArray(v)?[...new Set(v.filter(k=>typeof k==='string'&&k.trim()).map(x=>x.slice(0,40)))]:[]}catch(e){return []}};
-const defaultTask=()=>({id:uid(),tags:[],content:'',goal:'',planned:'90',actual:'',start:'',status:'planned',feeling:''});
-const empty=()=>({wake:'',leave:'',arrive:'',journalDone:false,vocabDone:false,reflection:'',tasks:[defaultTask()]});
-const normalizeTask=t=>{const p=defaultTask();return {...p,id:str(t?.id)||p.id,tags:readTags(t?.tags),content:str(t?.content),goal:str(t?.goal),planned:String(t?.planned??'90'),actual:String(t?.actual??''),start:str(t?.start),status:['planned','progress','done'].includes(t?.status)?t.status:'planned',feeling:str(t?.feeling)}};
+const defaultTask=()=>({id:uid(),tags:[],content:'',goal:'',planned:'90',actual:'',start:'',status:'planned',feeling:'',adjustedStart:'',adjustedMinutes:'',carryMinutes:''});
+const empty=()=>({wake:'',leave:'',arrive:'',journalDone:false,vocabDone:false,reflection:'',tasks:[defaultTask()],morningPlan:{},replanHistory:[]});
+const normalizeTask=t=>{const p=defaultTask();return {...p,id:str(t?.id)||p.id,tags:readTags(t?.tags),content:str(t?.content),goal:str(t?.goal),planned:String(t?.planned??'90'),actual:String(t?.actual??''),start:str(t?.start),status:['planned','progress','done'].includes(t?.status)?t.status:'planned',feeling:str(t?.feeling),adjustedStart:str(t?.adjustedStart),adjustedMinutes:str(t?.adjustedMinutes),carryMinutes:str(t?.carryMinutes)}};
 const normalize=d=>{
- const v={...empty(),wake:str(d?.wake),leave:str(d?.leave),arrive:str(d?.arrive),journalDone:d?.journalDone===true,vocabDone:d?.vocabDone===true,reflection:str(d?.reflection)};
+ const v={...empty(),wake:str(d?.wake),leave:str(d?.leave),arrive:str(d?.arrive),journalDone:d?.journalDone===true,vocabDone:d?.vocabDone===true,reflection:str(d?.reflection),morningPlan:d?.morningPlan&&typeof d.morningPlan==='object'?d.morningPlan:{},replanHistory:Array.isArray(d?.replanHistory)?d.replanHistory.slice(-50):[]};
  if(Array.isArray(d?.tasks)){v.tasks=d.tasks.map(normalizeTask);return v}
  const old1=str(d?.study1),old2=str(d?.study2),o1tags=readTags(d?.taskTags1),o2tags=readTags(d?.taskTags2);
  v.tasks=[normalizeTask({content:old1,tags:o1tags,goal:d?.outcome1,planned:'90',start:'',status:d?.status1,actual:'',feeling:''})];
@@ -82,7 +90,7 @@ const normalize=d=>{
  }
  return v;
 };
-let categories=[...DEFAULT_TAGS],db={},current=today(),active=null;
+let categories=[...DEFAULT_TAGS],db={},current=today(),active=null,replanDraft=null;
 try{const a=JSON.parse(localStorage.getItem(TAG_KEY)||'null');if(Array.isArray(a))categories=[...new Set([...DEFAULT_TAGS,...a.filter(x=>typeof x==='string'&&x.trim()&&x.length<=40)])]}catch(e){}
 try{const old=JSON.parse(localStorage.getItem(KEY)||'{}');if(old&&typeof old==='object'&&!Array.isArray(old)){const records=old.records&&typeof old.records==='object'?old.records:old;for(const [k,v] of Object.entries(records))if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&v&&typeof v==='object')db[k]=normalize(v)}}catch(e){alert('本地记录读取失败，请使用备份文件恢复。')}
 if(!db['2026-11-12'])db['2026-11-12']=normalize({wake:'05:10',leave:'05:50',arrive:'06:50',study1:'复习和再次学习 Java メソッド'});
@@ -93,7 +101,7 @@ const persist=()=>{
  updateStats();updateHistory();
 };
 const tagButtons=(tags,idx)=>categories.map(tag=>'<button class="tag-choice'+(tags.includes(tag)?' selected':'')+'" type="button" data-tag="'+encodeURIComponent(tag)+'" data-idx="'+idx+'" aria-pressed="'+tags.includes(tag)+'">'+esc(tag)+'</button>').join('');
-const taskTime=t=>{
+const originalTaskTime=t=>{
  let from=min(t.start);
  if(from===null){
   const arrival=min(record().arrive);
@@ -104,6 +112,7 @@ const taskTime=t=>{
  const n=nonneg(t.planned);
  return n===null?clock(from)+' 开始 · 计划时长待填':range(from,n)+'（计划 '+n+' 分钟）';
 };
+const taskTime=t=>t.adjustedStart&&t.adjustedMinutes!==''?'原计划：'+originalTaskTime(t)+' ｜ 调整后：'+range(min(t.adjustedStart),Number(t.adjustedMinutes))+'（'+t.adjustedMinutes+'分钟）'+(Number(t.carryMinutes)>0?'；剩余'+t.carryMinutes+'分钟待安排':''):t.carryMinutes&&Number(t.carryMinutes)>0?'原计划：'+originalTaskTime(t)+' ｜ 未排入，剩余'+t.carryMinutes+'分钟':originalTaskTime(t);
 const taskMarkup=(t,i)=>'<article class="task-card" data-id="'+esc(t.id)+'">'+
  '<div class="task-head"><h3>学习任务 '+(i+1)+'</h3><div class="task-actions"><button type="button" class="btn danger" data-remove="'+i+'">删除</button></div></div>'+
  '<div class="field"><label>任务名称（支持多选组合）</label><div class="task-tags" data-tags="'+i+'">'+tagButtons(t.tags,i)+'</div></div>'+
@@ -128,7 +137,7 @@ const renderNames=()=>{
  const custom=categories.filter(t=>!DEFAULT_TAGS.includes(t));
  $('customTags').innerHTML=custom.length?custom.map(t=>'<span class="tag-choice" style="display:inline-flex;gap:5px;align-items:center">'+esc(t)+' <button type="button" class="tag-remove" data-remove-tag="'+encodeURIComponent(t)+'">×</button></span>').join(''):'<p class="hint">暂无自定义名称</p>';
 };
-const show=()=>{active=normalize(db[current]||{});$('date').value=current;for(const field of ['wake','leave','arrive','reflection'])$(field).value=active[field];for(const field of ['journalDone','vocabDone'])$(field).checked=active[field];renderTasks();renderNames();renderTimeline();updateStats();updateHistory()};
+const show=()=>{active=normalize(db[current]||{});$('date').value=current;for(const field of ['wake','leave','arrive','reflection'])$(field).value=active[field];for(const field of ['journalDone','vocabDone'])$(field).checked=active[field];renderTasks();renderNames();renderTimeline();renderReplanLog();updateStats();updateHistory();replanDraft=null;$('replanOutput').hidden=true;$('replanApplyBtn').disabled=true};
 const actualMinutes=d=>(d.tasks||[]).reduce((a,t)=>a+(nonneg(t.actual)??0),0);
 const updateStats=()=>{
  const keys=Object.keys(db).filter(k=>k<=today()).sort(),known=keys.filter(k=>{const d=db[k];return !!(d.wake||d.leave||d.arrive||d.reflection||d.journalDone||d.vocabDone||d.tasks?.some(t=>t.content||t.actual||t.goal||t.feeling))});
@@ -206,7 +215,56 @@ $('csvBtn').onclick=()=>{
  const rows=[header];for(const k of Object.keys(db).sort()){const d=db[k];for(let i=0;i<(d.tasks||[]).length;i++){const t=d.tasks[i];rows.push([k,i+1,t.tags.join(' + '),t.content,t.planned,t.actual,t.status,t.goal,t.feeling,d.reflection])}}
  const csv='\ufeff'+rows.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\r\n');download('study-journal-'+today()+'.csv',csv,'text/csv;charset=utf-8');
 };
-show();
+
+const nowClock=()=>{const d=new Date();return clock(d.getHours()*60+d.getMinutes())};
+const renderReplanLog=()=>{$('replanLog').innerHTML=(record().replanHistory||[]).slice(-6).reverse().map(x=>'<section><strong>'+esc(x.at)+'</strong> '+esc(x.reason||'调整计划')+'<div>'+esc(x.summary).replace(/\n/g,' / ')+'</div></section>').join('')};
+const buildReplan=()=>{
+ if(current!==today())throw Error('请先选择今天的日期，再使用自动重新安排');
+ const start=min($('replanNow').value),end=min($('replanEnd').value);
+ if(start===null||end===null||end<=start)throw Error('请填写有效的起止时间，结束须晚于开始');
+ let cursor=start;const changes=[],messages=[];
+ for(const spec of [['journal','journalDone','journalChoice','晨间日记',15],['vocab','vocabDone','vocabChoice','背单词',10]]){
+  const [key,doneField,choiceId,name,full]=spec;
+  if(record()[doneField]){messages.push(name+'：已完成');continue}
+  const choice=$(choiceId).value,desired=choice==='keep'?full:choice==='short'?5:0;
+  if(!desired){changes.push({kind:'morning',key,status:choice});messages.push(name+'：'+(choice==='skip'?'跳过':'延期'));continue}
+  const use=Math.min(desired,Math.max(0,end-cursor));
+  if(use){changes.push({kind:'morning',key,status:'scheduled',start:clock(cursor),minutes:String(use)});messages.push(name+'：'+range(cursor,use));cursor+=use}
+  else{changes.push({kind:'morning',key,status:'later'});messages.push(name+'：时间不足，延期')}
+ }
+ for(const task of record().tasks){
+  const name=task.tags.join('+')||task.content.slice(0,18)||'学习任务';
+  if(task.status==='done'){messages.push(name+'：已完成');continue}
+  const planned=nonneg(task.planned);
+  if(planned===null){messages.push(name+'：计划时长未知，暂不调整');continue}
+  const remainder=Math.max(0,planned-(nonneg(task.actual)||0));
+  if(!remainder){messages.push(name+'：已达到计划分钟数');continue}
+  const use=Math.min(remainder,Math.max(0,end-cursor));
+  changes.push({kind:'task',id:task.id,start:use?clock(cursor):'',minutes:use?String(use):'',carry:String(remainder-use)});
+  messages.push(name+'：'+(use?range(cursor,use)+'（'+use+'分钟）':'本次延期')+(remainder-use?'，余'+(remainder-use)+'分钟待安排':''));
+  cursor+=use;
+ }
+ if(cursor<end)messages.push('缓冲：'+(end-cursor)+'分钟');
+ return {changes,summary:messages.join('\n'),reason:$('replanReason').value.trim(),start:clock(start),end:clock(end)};
+};
+$('replanNowBtn').onclick=()=>{$('replanNow').value=nowClock();replanDraft=null;$('replanOutput').hidden=true;$('replanApplyBtn').disabled=true};
+$('replanPreviewBtn').onclick=()=>{try{replanDraft=buildReplan();$('replanOutput').textContent=replanDraft.summary;$('replanOutput').hidden=false;$('replanApplyBtn').disabled=false}catch(e){alert(e.message)}};
+for(const id of ['replanNow','replanEnd','journalChoice','vocabChoice','replanReason'])$(id).addEventListener('input',()=>{replanDraft=null;$('replanApplyBtn').disabled=true});
+$('replanApplyBtn').onclick=()=>{
+ if(!replanDraft)return;
+ const d=record(),p=replanDraft;
+ const before={morningPlan:JSON.parse(JSON.stringify(d.morningPlan||{})),tasks:d.tasks.map(t=>({id:t.id,planned:t.planned,start:t.start,actual:t.actual,adjustedStart:t.adjustedStart,adjustedMinutes:t.adjustedMinutes,carryMinutes:t.carryMinutes}))};
+ for(const change of p.changes){
+  if(change.kind==='morning')d.morningPlan[change.key]={status:change.status,start:change.start||'',minutes:change.minutes||''};
+  if(change.kind==='task'){const t=d.tasks.find(t=>t.id===change.id);if(t){t.adjustedStart=change.start;t.adjustedMinutes=change.minutes;t.carryMinutes=change.carry}}
+ }
+ d.replanHistory.push({at:new Date().toLocaleString('zh-CN',{hour12:false}),reason:p.reason,summary:p.summary,original:before});
+ d.replanHistory=d.replanHistory.slice(-50);
+ persist();renderTimeline();renderReplanLog();
+ replanDraft=null;$('replanApplyBtn').disabled=true;toast('调整已保存，原计划和修改记录保留');
+};
+
+$('replanNow').value=nowClock();show();
 })();
 
 </script></body></html>
