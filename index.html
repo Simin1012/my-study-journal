@@ -129,7 +129,7 @@ const updateTaskPreviews=()=>{record().tasks.forEach((t,i)=>{const el=document.q
 const renderTasks=()=>{$('taskList').innerHTML=record().tasks.length?record().tasks.map(taskMarkup).join(''):'<p class="empty">暂无学习任务，请点击“添加任务”。</p>'};
 const renderTimeline=()=>{
  const a=min(record().arrive);
- const lines=[['晨间日记','15分钟',range(a,15)],['背单词','10分钟',range(a===null?null:a+15,10)]];
+ const d=record(),morning=d.morningPlan||{};const adjusted=(key,start,minutes)=>{const orig=range(start,minutes),c=morning[key];if(!c)return orig;return orig+' → '+(c.status==='skip'?'已跳过':c.status==='later'?'已延期':c.status==='scheduled'?range(min(c.start),Number(c.minutes)):'已调整')};const lines=[['晨间日记','15分钟',adjusted('journal',a,15)],['背单词','10分钟',adjusted('vocab',a===null?null:a+15,10)]];
  $('timeline').innerHTML=lines.map(([name,desc,time])=>'<li class="item"><span class="time">'+time+'</span><span class="track"><span class="dot"></span><span class="stem"></span></span><span><span class="item-name">'+name+'</span><br><span class="item-desc">'+desc+'</span></span></li>').join('');
  updateTaskPreviews();
 };
@@ -168,7 +168,7 @@ const summary=()=>{
  const d=record(),a=min(d.arrive);
  let out='【朝活记录｜'+current+'】\n起床：'+(d.wake||'未填')+'\n出门：'+(d.leave||'未填')+'\n到达星巴克：'+(d.arrive||'未填')+'\n晨间日记：'+range(a,15)+' '+(d.journalDone?'已完成':'未确认')+'\n背单词：'+range(a===null?null:a+15,10)+' '+(d.vocabDone?'已完成':'未确认');
  d.tasks.forEach((t,i)=>{out+='\n\n【学习任务'+(i+1)+'】\n名称：'+(t.tags.join(' + ')||'未分类')+'\n内容：'+(t.content||'未填')+'\n时间：'+taskTime(t)+'\n计划：'+(t.planned||'未填')+'分钟；实际：'+(t.actual||'未填')+'分钟\n状态：'+({planned:'计划中',progress:'进行中',done:'已完成'}[t.status])+'\n成果：'+(t.goal||'未填')+'\n感想：'+(t.feeling||'未填')});
- return out+'\n\n今日复盘：'+(d.reflection||'未填写');
+ return out+'\n\n今日复盘：'+(d.reflection||'未填写')+'\n重新安排次数：'+(d.replanHistory||[]).length;
 };
 const onTaskChange=e=>{
  const el=e.target.closest('[data-field]');if(!el)return;
