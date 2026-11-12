@@ -3,7 +3,7 @@
 'use strict';
 const KEY='momo-study-language-v2';
 const dictionary=[
-['学习与成长记录','学習・成長記録'],
+['学习与成长记录','学習・成長記録'],['Java学习','Java学習'],['AI沟通','AIとの相談'],['背单词','単語学習'],['开始时间待定','開始時刻未定'],['计划时长待填','予定時間が未入力'],['任务名称','タスク名'],
 ['每天一点点积累。记录时间、学习内容，以及真正完成了什么。','毎日の小さな積み重ね。時間・学習内容・実績を記録します。'],
 ['今日朝活','今日の朝活'],['自习点到达时间','学習場所への到着時刻'],['起床时间','起床時刻'],['出门时间','出発時刻'],
 ['完成任务','完了タスク'],['今日主线任务','今日のメインタスク'],['查看主线','メインを開く'],
@@ -76,13 +76,33 @@ const dictionary=[
 ['打开 ChatGPT（新标签页）','ChatGPT を開く（別タブ）']
 ];
 const byChinese=new Map(dictionary),byJapanese=new Map(dictionary.map(([zh,ja])=>[ja,zh]));
-const ignore='textarea,code,pre,script,style,.tag-choice,.task-tags,#mlSelect option,.category-stat strong,#history strong,[contenteditable="true"],[data-i18n-ignore],[data-user-content],.task-card h3,#v2Title,#v2DiaryHistory .meta,#v2OverviewTasks .record,#v2DailyList strong';
+const ignore='textarea,code,pre,script,style,.task-tags,#mlSelect option,.category-stat strong,#history strong,[contenteditable="true"],[data-i18n-ignore],[data-user-content],#v2Title,#v2DiaryHistory .meta,#v2OverviewTasks .record,#v2DailyList strong';
 const trimReplace=(original,newText)=>original.replace(/^(\s*)[\s\S]*?(\s*)$/,(_,start,end)=>start+newText+end);
 function translateWhole(text,isJa){
  const pair=(isJa?byChinese:byJapanese).get(text);
  return pair===undefined?null:pair;
 }
 function translatePatterns(text,isJa,parent){
+ if(parent?.closest?.('.task-card h3')){
+   const m=text.match(/^(.*?) · (\d+)分钟$/);
+   if(m&&isJa)return (byChinese.get(m[1])||m[1])+' · '+m[2]+'分';
+   const n=text.match(/^(.*?) · (\d+)分$/);
+   if(n&&!isJa)return (byJapanese.get(n[1])||n[1])+' · '+n[2]+'分钟';
+ }
+ if(parent?.closest?.('#history .meta')){
+   const m=text.match(/^(.*) · (\d+)项任务 · 实际(\d+)分钟$/);
+   if(m&&isJa)return m[1]+' · '+m[2]+'件のタスク · 実績'+m[3]+'分';
+   const n=text.match(/^(.*) · (\d+)件のタスク · 実績(\d+)分$/);
+   if(n&&!isJa)return n[1]+' · '+n[2]+'项任务 · 实际'+n[3]+'分钟';
+ }
+ if(parent?.id==='weekCount'){
+   const m=text.match(/^(\d+[/]7)天$/);if(m&&isJa)return m[1]+'日';
+   const n=text.match(/^(\d+[/]7)日$/);if(n&&!isJa)return n[1]+'天';
+ }
+ if(parent?.closest?.('.category-stat span')){
+   const m=text.match(/^(\d+(?:\.\d+)?) 分钟$/);if(m&&isJa)return m[1]+' 分';
+   const n=text.match(/^(\d+(?:\.\d+)?) 分$/);if(n&&!isJa)return n[1]+' 分钟';
+ }
  if(parent?.closest?.('.item-desc')){
    const m=text.match(/^原定 (\d+)分钟 · (已完成|未完成) · 实际 (未记录|(\d+)分钟)$/);
    if(m&&isJa)return '予定 '+m[1]+'分 · '+(m[2]==='已完成'?'完了':'未完了')+' · 実績 '+(m[3]==='未记录'?'未記録':m[4]+'分');
