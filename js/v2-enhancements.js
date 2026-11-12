@@ -64,6 +64,7 @@ function setupLanguage(){
  applyLanguage();
 }
 const labels={
+ '今日朝活':['今日朝活','今日の朝活'],'起床时间':['起床时间','起床時刻'],'出门时间':['出门时间','出発時刻'],'星巴克到达':['星巴克到达','スターバックス到着'],'日记已完成':['日记已完成','日記完了'],'背单词已完成':['背单词已完成','単語学習完了'],'保存今日记录':['保存今日记录','今日の記録を保存'],'复制今日摘要':['复制今日摘要','今日の要約をコピー'],'添加任务':['添加任务','タスクを追加'],'今日整体复盘':['今日整体复盘','今日の振り返り'],'任务名称管理':['任务名称管理','タスク名の管理'],'实际学习分钟':['实际学习分钟','実際の学習時間（分）'],'有记录天数':['有记录天数','記録した日数'],'连续记录天数':['连续记录天数','連続記録日数'],'最近7天记录':['最近7天记录','直近7日間の記録'],'按任务名称统计':['按任务名称统计','タスク別統計'],'导出 CSV':['导出 CSV','CSV出力'],'重新开始时间':['重新开始时间','再開時刻'],'最晚结束时间':['最晚结束时间','終了期限'],'现在重新安排':['现在重新安排','予定を組み直す'],'确认调整':['确认调整','変更を確定'],'预览新安排':['预览新安排','新しい予定を確認'],'读取当前时间':['读取当前时间','現在時刻を取得'],'晨间日记 · 今日记录':['晨间日记 · 今日记录','朝の日記・今日の記録'],'今天的一句话总结':['今天的一句话总结','今日のひとこと'],'小红书 · 今日分享':['小红书 · 今日分享','小紅書・今日のシェア'],'关闭':['关闭','閉じる'],'复制正文':['复制正文','本文をコピー'],'复制标题':['复制标题','タイトルをコピー'],'全部复制':['全部复制','すべてコピー'],'从实际记录生成正文':['从实际记录生成正文','記録から本文を生成'],'确认发布':['确认发布','投稿済みを記録'],
  '今日':['今日','今日'],'计划':['计划','計画'],'主线':['主线','メイン'],'日记':['日记','日記'],'统计':['统计','統計'],
  '学习与成长记录':['学习与成长记录','学習・成長記録'],'计划设置':['计划设置','計画設定'],'主线任务':['主线任务','メインタスク'],'学习统计':['学习统计','学習統計'],
  '备份数据':['备份数据','バックアップ'],'导入备份':['导入备份','復元'],'分享今日记录 · 小红书':['分享今日记录 · 小红书','今日の記録をシェア'],
@@ -74,7 +75,7 @@ function applyLanguage(){
  const ja=lang()==='ja';document.documentElement.lang=ja?'ja':'zh-CN';
  document.title=t('学习与成长记录','学習・成長記録');
  document.querySelectorAll('.v2-nav button').forEach(b=>{const span=b.querySelector('span');const key=b.dataset.page;const names={today:['今日','今日'],plan:['计划','計画'],mainline:['主线','メイン'],journal:['日记','日記'],stats:['统计','統計']};if(span&&names[key]){const tail=[...b.childNodes].find(n=>n.nodeType===3);if(tail)tail.textContent=names[key][ja?1:0]}});
- document.querySelectorAll('h1,h2,.v2-tabbar button,#v2Share,#exportJson,#importBtn').forEach(el=>{const txt=el.textContent.trim(),entry=labels[txt]||Object.values(labels).find(v=>v.includes(txt));if(entry)el.textContent=entry[ja?1:0]});
+ document.querySelectorAll('h1,h2,h3,.v2-tabbar button,.v2-modal button,.v2-modal label,.v2-extra label,.card label,.stat-label,.card-head button,#v2Share,#exportJson,#importBtn,#saveBtn,#copyBtn').forEach(el=>{if(el.children.length)return;const txt=el.textContent.trim(),entry=labels[txt]||Object.values(labels).find(v=>v.includes(txt));if(entry)el.textContent=entry[ja?1:0]});
  const title=document.querySelector('h1.title');if(title)title.textContent=t('学习与成长记录','学習・成長記録');
 }
 function setupJournal(){
