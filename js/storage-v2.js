@@ -26,7 +26,7 @@
     const d=read();
     if(!d.mainlines.some(m=>m.id===mainlineId))throw Error('Unknown mainline');
     if(!isObject(task)||typeof task.title!=='string'||!task.title.trim())throw Error('Invalid task');
-    const t={id:id(),mainlineId,title:task.title.trim(),plannedMinutes:Number.isFinite(task.plannedMinutes)&&task.plannedMinutes>=0?task.plannedMinutes:null,actualMinutes:null,start:/^([01]\\d|2[0-3]):[0-5]\\d$/.test(String(task.start||''))?task.start:'',status:'planned',notes:'',codeSnippets:[]};
+    const t={id:id(),mainlineId,title:task.title.trim(),plannedMinutes:Number.isFinite(task.plannedMinutes)&&task.plannedMinutes>=0?task.plannedMinutes:null,actualMinutes:null,start:/^([01]\d|2[0-3]):[0-5]\d$/.test(String(task.start||''))?task.start:'',status:'planned',notes:'',codeSnippets:[]};
     (d.daily[date]??=[]).push(t);write(d);return t;
   }
   function exportAll(){
