@@ -274,7 +274,7 @@ const diaryField=$('morningJournal').closest('.field');if(diaryField)$('v2-diary
 const backups=document.querySelector('.top-right');if(backups){backups.style.display='flex';$('v2-backup').append(backups)}const csvBtn=$('csvBtn');if(csvBtn)$('v2-backup').append(csvBtn);
 tasksCard.classList.add('v2-task-compact');const nav=document.createElement('nav');nav.className='v2-nav';nav.innerHTML=[['today','⌂','今日'],['plan','▦','计划'],['mainline','◎','主线'],['journal','▤','日记'],['stats','▥','统计']].map(x=>'<button data-page="'+x[0]+'" class="'+(x[0]==='today'?'active':'')+'"><span>'+x[1]+'</span>'+x[2]+'</button>').join('');document.body.append(nav);
 let view='today';
-function updateV2(){const d=record(),done=(d.journalDone?1:0)+(d.vocabDone?1:0)+d.tasks.filter(t=>t.status==='done').length;$('v2Count').textContent=done+' / '+(d.tasks.length+2);$('v2Wake').textContent=d.wake||'--:--';dailyList()}
+function updateV2(){const d=record(),extra=window.MomoV2Storage?.read?.()?.daily?.[current]||[],done=(d.journalDone?1:0)+(d.vocabDone?1:0)+d.tasks.filter(t=>t.status==='done').length+extra.filter(t=>t.status==='done').length;$('v2Count').textContent=done+' / '+(d.tasks.length+2+extra.length);$('v2Wake').textContent=d.wake||'--:--';dailyList()}
 function goV2(p){view=p;['today','plan','mainline','journal','stats'].forEach(x=>$('v2-'+x).classList.toggle('active',x===p));nav.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.page===p));document.querySelector('.title').textContent={today:'学习与成长记录',plan:'计划设置',mainline:'主线任务',journal:'日记',stats:'学习统计'}[p];if(p==='journal')diaryHistory();if(p==='stats'){updateStats();updateHistory()}if(p==='today')updateV2();window.scrollTo({top:0,behavior:'smooth'})}
 nav.onclick=e=>{const b=e.target.closest('[data-page]');if(b)goV2(b.dataset.page)};
 $('v2-today-slot').addEventListener('click',e=>{const t=e.target.closest('.task-head h3');if(t)t.closest('.task-card').classList.toggle('open')});
@@ -328,7 +328,7 @@ function postBody(){
  lines.unshift(description('背单词',plan.vocab,'',vp));
  lines.unshift(description('晨间日记',plan.journal,'',jp));
  const diary=d.morningJournal.trim()||'（当天晨间日记尚未填写）';
- const reflection=d.reflection.trim()||(v2?.reviews?.[current]?.summary||'').trim()||'（尚未填写）';
+ const reflection=(v2?.reviews?.[current]?.summary||'').trim()||d.reflection.trim()||'（尚未填写）';
  return '【晨间日记】\n'+diary+
  '\n\n【学习计划】\n'+lines.join('\n')+
  '\n\n【学习感想】\n'+(feelings.join('\n')||'（暂无学习感想记录）')+
