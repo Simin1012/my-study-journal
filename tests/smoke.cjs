@@ -45,6 +45,10 @@ function listen(){return new Promise(resolve=>server.listen(0,'127.0.0.1',()=>re
     assert.ok(await page.locator('.v2-guide-steps').isVisible(),'daily workflow explained');
     assert.ok(await page.locator('#mlAiCard').isVisible(),'AI plan assistant visible at top');
     assert.ok(await page.locator('#mlFromChat').isVisible(),'Convert prior ChatGPT conversation button visible');
+    await page.locator('#mlFromChat').click();
+    assert.ok(await page.locator('#mlFromChatText').isVisible(),'Conversion instructions visibly appear');
+    assert.match(await page.locator('#mlFromChatText').inputValue(),/已经讨论确定/);
+    assert.match(await page.locator('#mlFromChatStatus').innerText(),/复制|粘贴|コピー/);
     assert.ok(await page.locator('#mlImport').isVisible(),'AI JSON input is not hidden in details');
     await page.locator('#mlProgress').fill('Section 11 Lesson 65');
     await page.locator('#mlSave').click();
