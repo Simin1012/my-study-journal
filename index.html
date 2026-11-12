@@ -294,17 +294,43 @@ $('v2SaveTimes').onclick=()=>{if(nonneg($('v2DiaryMins').value)===null||nonneg($
 function diaryHistory(){const dates=Object.keys(db).filter(k=>db[k]?.morningJournal).sort().reverse();$('v2DiaryHistory').innerHTML=dates.length?dates.slice(0,25).map(k=>'<div class="record"><div><strong>'+k+'</strong><div class="meta">'+esc(db[k].morningJournal.slice(0,44))+'</div></div><button class="btn small" data-diary="'+k+'">查看</button></div>').join(''):'<p class="empty">暂无日记</p>'}
 $('v2DiaryHistory').onclick=e=>{const b=e.target.closest('[data-diary]');if(!b)return;current=b.dataset.diary;$('date').value=current;show();updateV2();goV2('journal')};
 $('date').addEventListener('change',()=>{updateV2();diaryHistory()});$('taskList').addEventListener('change',()=>setTimeout(updateV2,0));$('taskList').addEventListener('click',()=>setTimeout(updateV2,0));$('journalDone').addEventListener('change',()=>setTimeout(updateV2,0));$('vocabDone').addEventListener('change',()=>setTimeout(updateV2,0));$('wake').addEventListener('input',()=>setTimeout(updateV2,0));
-const modal=document.createElement('div');modal.className='v2-modal';modal.id='v2Modal';modal.innerHTML='<div class="v2-sheet"><div class="mini-row" style="justify-content:space-between"><h2>小红书 · 今日分享</h2><button class="btn" id="v2CloseShare">关闭</button></div><p class="v2-note">累计打卡从D0开始。复制不会增加编号；确认发布后才增加。</p><div class="field"><label>今天的一句话总结</label><input class="input" id="v2Summary" maxlength="100" placeholder="计划被打乱，也没关系"></div><h3 style="margin-top:14px">标题预览</h3><div class="v2-preview" id="v2Title"></div><div class="v2-row"><button class="btn" id="v2CopyTitle">复制标题</button></div><div class="field" style="margin-top:12px"><label>正文（可修改）</label><textarea class="input" id="v2Body" rows="10"></textarea></div><div class="v2-row"><button class="btn" id="v2Generate">从实际记录生成正文</button><button class="btn" id="v2CopyBody">复制正文</button><button class="btn primary" id="v2CopyAll">全部复制</button></div><hr class="section-sep"><div class="v2-row"><button class="btn" id="v2Published">标记已发布</button><span class="v2-note" id="v2PublishState"></span></div><p class="v2-note">“已发布”只是保存打卡编号，不会替你发小红书。晨间日记全文不会自动进入正文。</p></div>';document.body.append(modal);
+const modal=document.createElement('div');modal.className='v2-modal';modal.id='v2Modal';modal.innerHTML='<div class="v2-sheet"><div class="mini-row" style="justify-content:space-between"><h2>小红书 · 今日分享</h2><button class="btn" id="v2CloseShare">关闭</button></div><p class="v2-note">累计打卡从D0开始。复制不会增加编号；确认发布后才增加。</p><div class="field"><label>今天的一句话总结</label><input class="input" id="v2Summary" maxlength="100" placeholder="计划被打乱，也没关系"></div><h3 style="margin-top:14px">标题预览</h3><div class="v2-preview" id="v2Title"></div><div class="v2-row"><button class="btn" id="v2CopyTitle">复制标题</button></div><div class="field" style="margin-top:12px"><label>正文（自动读取当天晨间日记全文，可自由删减；不修改日记原文）</label><textarea class="input" id="v2Body" rows="10"></textarea></div><div class="v2-row"><button class="btn" id="v2Generate">从实际记录生成正文</button><button class="btn" id="v2CopyBody">复制正文</button><button class="btn primary" id="v2CopyAll">全部复制</button></div><hr class="section-sep"><div class="v2-row"><button class="btn" id="v2Published">标记已发布</button><span class="v2-note" id="v2PublishState"></span></div><p class="v2-note">“已发布”只是保存打卡编号，不会替你发小红书。晨间日记全文不会自动进入正文。</p></div>';document.body.append(modal);
 function post(){const d=record();if(!d.post)d.post={summary:'',body:'',publishedNumber:null,publishedAt:''};return d.post}
 function postDay(){if(Number.isInteger(post().publishedNumber))return post().publishedNumber;const nums=Object.values(db).map(d=>d.post?.publishedNumber).filter(n=>Number.isInteger(n));return nums.length?Math.max(...nums)+1:0}
 function postTitle(){return '早起D'+postDay()+'🌞'+(record().wake||'--:--')+'｜'+($('v2Summary').value.trim()||'今天也记录真实的自己')}
-function postBody(){const d=record(),lines=[];d.tasks.forEach(t=>{const n=nonneg(t.actual);if(n!==null&&n>0)lines.push('· '+(t.tags.join(' + ')||t.content||'学习任务')+'：实际'+n+'分钟'+(t.content?'，'+t.content:''));else if(t.status==='done')lines.push('· '+(t.tags.join(' + ')||'学习任务')+'：已完成（未记录时长）')});if(d.journalDone)lines.push('· 晨间日记：已完成');if(d.vocabDone)lines.push('· 背单词：已完成');const feelings=d.tasks.filter(t=>t.feeling).map(t=>'· '+(t.tags.join(' + ')||'学习任务')+'：'+t.feeling);return '今天的朝活记录\n\n【实际学习】\n'+(lines.join('\n')||'尚未记录实际完成的学习任务。')+(feelings.length?'\n\n【学习感想】\n'+feelings.join('\n'):'')+(d.reflection?'\n\n【今日总结】\n'+d.reflection:'')+'\n\n#朝活记录 #日本生活 #学习记录'}
+function postBody(){
+ const d=record(),lines=[],feelings=[];
+ const asMinutes=v=>{const n=nonneg(v);return n===null?'':(n>=60&&n%60===0?(n/60)+'小时':n+'分钟')};
+ const description=(name,planned,actual,status)=>{
+  const p=asMinutes(planned),a=asMinutes(actual);
+  if(a)return '· '+name+'：'+(p?'原定'+p+'，':'')+'实际学习'+a+(status==='done'?'（已完成）':status==='postponed'?'（剩余已延期）':'');
+  if(status==='done')return '· '+name+'：已完成'+(p?'（原定'+p+'，实际时间未记录）':'（实际时间未记录）');
+  const states={planned:'计划中',progress:'进行中',postponed:'已延期'};
+  return '· '+name+'：'+(p?'原定'+p+'，':'')+(states[status]||'未标记完成')+'，实际时间未记录';
+ };
+ d.tasks.forEach(t=>{
+  const name=t.tags.join(' + ')||t.content.slice(0,30)||'学习任务';
+  lines.push(description(name,t.planned,t.actual,t.status));
+  if(t.feeling.trim())feelings.push('· '+name+'：'+t.feeling.trim());
+ });
+ // The legacy routine checkboxes do not establish actual minutes.
+ const jp=d.journalDone?'done':'planned',vp=d.vocabDone?'done':'planned';
+ lines.unshift(description('背单词',plan.vocab,'',vp));
+ lines.unshift(description('晨间日记',plan.journal,'',jp));
+ const diary=d.morningJournal.trim()||'（当天晨间日记尚未填写）';
+ const reflection=d.reflection.trim()||'（尚未填写）';
+ return '【晨间日记】\n'+diary+
+ '\n\n【学习计划】\n'+lines.join('\n')+
+ '\n\n【学习感想】\n'+(feelings.join('\n')||'（暂无学习感想记录）')+
+ '\n\n【今日总结】\n'+reflection+
+ '\n\n#朝活记录 #日本生活 #学习记录';
+}
 function updatePost(){$('v2Title').textContent=postTitle();const p=post();$('v2PublishState').textContent=Number.isInteger(p.publishedNumber)?'已标记发布 D'+p.publishedNumber:'尚未发布';$('v2Published').disabled=Number.isInteger(p.publishedNumber)}
-$('v2Share').onclick=()=>{$('v2Summary').value=post().summary||'';$('v2Body').value=post().body||postBody();updatePost();modal.classList.add('active')};
+$('v2Share').onclick=()=>{const p=post();$('v2Summary').value=p.summary||'';if(p.templateVersion!==2){if(p.body&&!p.previousBody)p.previousBody=p.body;p.body=postBody();p.templateVersion=2;persist()}$('v2Body').value=p.body||postBody();updatePost();modal.classList.add('active')};
 $('v2CloseShare').onclick=()=>modal.classList.remove('active');modal.onclick=e=>{if(e.target===modal)modal.classList.remove('active')};
 $('v2Summary').oninput=()=>{post().summary=$('v2Summary').value;persist();updatePost()};
-$('v2Body').oninput=()=>{post().body=$('v2Body').value;persist()};
-$('v2Generate').onclick=()=>{if(!confirm('重新生成正文会覆盖已编辑的分享正文，继续吗？'))return;$('v2Body').value=postBody();post().body=$('v2Body').value;persist()};
+$('v2Body').oninput=()=>{post().body=$('v2Body').value;post().templateVersion=2;persist()};
+$('v2Generate').onclick=()=>{if(!confirm('重新生成正文会覆盖已编辑的分享正文，继续吗？'))return;$('v2Body').value=postBody();post().body=$('v2Body').value;post().templateVersion=2;persist()};
 function fallbackCopy(s){const t=document.createElement('textarea');t.value=s;document.body.append(t);t.select();document.execCommand('copy');t.remove();toast('已复制')}
 function copy(s){if(navigator.clipboard?.writeText)navigator.clipboard.writeText(s).then(()=>toast('已复制')).catch(()=>fallbackCopy(s));else fallbackCopy(s)}
 $('v2CopyTitle').onclick=()=>copy(postTitle());$('v2CopyBody').onclick=()=>copy($('v2Body').value);$('v2CopyAll').onclick=()=>copy(postTitle()+'\n\n'+$('v2Body').value);
