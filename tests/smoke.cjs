@@ -57,6 +57,7 @@ function listen(){return new Promise(resolve=>server.listen(0,'127.0.0.1',()=>re
     assert.equal(await page.locator('#v2Language').inputValue(),'ja');
     assert.ok(await page.locator('#v2GlobalDate').isVisible(),'global date visible');
     await page.locator('#v2Language').selectOption('zh');
+    await page.locator('.v2-nav button[data-page="mainline"]').click();
     await page.locator('#mlImport').evaluate(el=>el.closest('details').open=true);
     await page.locator('#mlImport').fill(JSON.stringify({tasks:[{title:'SQL查询练习',plannedMinutes:30}]}));
     await page.locator('#mlPreview').click();
