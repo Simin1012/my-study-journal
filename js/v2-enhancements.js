@@ -82,7 +82,7 @@ function setupJournal(){
  const box=document.createElement('div');box.className='card v2-extra';box.innerHTML='<h2 id="v2JournalExtraTitle">学习感想与今日总结</h2><div class="field"><label id="v2FeelingLabel">学习感想</label><textarea class="input" id="v2DayFeeling"></textarea></div><div class="field"><label id="v2SummaryLabel">今日总结</label><textarea class="input" id="v2DaySummary"></textarea></div><button class="btn primary" id="v2SaveJournalExtra">保存补充日记</button>';host.append(box);
  const load=()=>{const d=get();const v=d.reviews[date()]||{};$('v2DayFeeling').value=v.feeling||'';$('v2DaySummary').value=v.summary||''};
  $('v2SaveJournalExtra').onclick=()=>{const d=get();d.reviews[date()]={...(d.reviews[date()]||{}),feeling:$('v2DayFeeling').value,summary:$('v2DaySummary').value};if(safeSave(d))B.toast(t('已保存','保存しました'))};
- $('date').addEventListener('change',()=>setTimeout(()=>{load();render()},0));load();
+ $('date').addEventListener('change',()=>setTimeout(()=>{load();render();if(typeof window.MomoV2Refresh==='function')window.MomoV2Refresh()},0));load();
 }
 function setupOverview(){
  const slot=$('v2-today-slot'),box=document.createElement('div');box.className='card';box.innerHTML='<div class="card-head"><h2 id="v2OverviewTitle">今日主线任务</h2><button class="btn" id="v2OverviewOpen">查看主线</button></div><div id="v2OverviewTasks"></div>';slot.prepend(box);
@@ -90,7 +90,14 @@ function setupOverview(){
  const update=()=>{const d=get(),tasks=d.daily[date()]||[];$('v2OverviewTasks').innerHTML=tasks.length?tasks.map(x=>'<div class="record">'+esc(x.title)+' · '+(x.status==='done'?t('已完成','完了'):x.status==='progress'?t('进行中','進行中'):t('未完成/未开始','未完了・未開始'))+'</div>').join(''):'<p class="hint">'+t('尚无主线任务','メインタスクはまだありません')+'</p>'};
  const orig=B.goV2;B.goV2=p=>{orig(p);if(p==='mainline')render();if(p==='today')update();if(p==='journal'){$('v2DayFeeling').value=(get().reviews[date()]||{}).feeling||'';$('v2DaySummary').value=(get().reviews[date()]||{}).summary||''}applyLanguage()};
  document.querySelector('.v2-nav').addEventListener('click',()=>setTimeout(()=>{update();render();applyLanguage()},0));
- update();
+ window.MomoV2Refresh=update;update();
 }
-setupBackup();setupLanguage();setupJournal();setupOverview();render();
+function setupPlanAndStats(){
+ const plan=$('v2-plan'),stats=$('v2-stats');
+ if(plan){const card=document.createElement('div');card.className='card';card.innerHTML='<h2 id="v2LinkedPlanTitle">白天主线学习计划</h2><p class="hint" id="v2LinkedPlanHint">主线任务的时间与状态在主线页面管理，此处只读取，不重复创建。</p><div id="v2LinkedPlan"></div><button class="btn" id="v2LinkedPlanOpen">管理主线任务</button>';plan.append(card);$('v2LinkedPlanOpen').onclick=()=>B.goV2('mainline')}
+ if(stats){const card=document.createElement('div');card.className='card';card.innerHTML='<h2 id="v2LinkedStatsTitle">主线学习统计</h2><p class="hint" id="v2LinkedStatsHint">未记录实际时间不计入时长。</p><div id="v2LinkedStats"></div>';stats.append(card)}
+ const refresh=()=>{const d=get(),tasks=d.daily[date()]||[];if($('v2LinkedPlan'))$('v2LinkedPlan').innerHTML=tasks.length?tasks.map(x=>'<div class="record">'+esc(x.title)+' · '+(x.plannedMinutes??'—')+t('分钟','分')+' · '+(x.actualMinutes===null?t('实际未记录','実績未記録'):x.actualMinutes+t('分钟','分'))+'</div>').join(''):'<p class="hint">'+t('暂无主线计划','予定なし')+'</p>';if($('v2LinkedStats')){const all=Object.values(d.daily).flat().filter(x=>x&&typeof x==='object');const total=all.reduce((n,x)=>n+(typeof x.actualMinutes==='number'?x.actualMinutes:0),0);const known=all.filter(x=>typeof x.actualMinutes==='number').length;const done=all.filter(x=>x.status==='done').length;$('v2LinkedStats').textContent=t('累计有记录的主线学习：','記録済みの学習時間：')+total+t('分钟；有实际时间的任务 ','分、実績記録タスク ')+known+t('项；已完成 ','件、完了 ')+done+t('项','件')}};
+ document.querySelector('.v2-nav').addEventListener('click',()=>setTimeout(refresh,0));$('date').addEventListener('change',()=>setTimeout(refresh,0));window.MomoV2RefreshAll=refresh;refresh();
+}
+setupBackup();setupLanguage();setupJournal();setupOverview();setupPlanAndStats();render();
 })();
