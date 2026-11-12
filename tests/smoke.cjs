@@ -55,7 +55,22 @@ function listen(){return new Promise(resolve=>server.listen(0,'127.0.0.1',()=>re
     assert.equal(await page.title(),'学習・成長記録');
     await page.reload({waitUntil:'networkidle'});
     assert.equal(await page.locator('#v2Language').inputValue(),'ja');
+    assert.ok(await page.locator('#v2GlobalDate').isVisible(),'global date visible');
     await page.locator('#v2Language').selectOption('zh');
+    await page.locator('#mlImport').evaluate(el=>el.closest('details').open=true);
+    await page.locator('#mlImport').fill(JSON.stringify({tasks:[{title:'SQL查询练习',plannedMinutes:30}]}));
+    await page.locator('#mlPreview').click();
+    assert.equal(await page.locator('#mlApply').isEnabled(),true);
+    await page.locator('#mlApply').click();
+    assert.equal(await page.locator('[data-task]').count(),2);
+    await page.locator('#v2GlobalDate').fill('2026-12-01');
+    await page.locator('#v2GlobalDate').dispatchEvent('change');
+    await page.waitForTimeout(150);
+    assert.equal(await page.locator('[data-task]').count(),0,'other date has no tasks');
+    await page.locator('#v2GlobalDate').fill('2026-11-12');
+    await page.locator('#v2GlobalDate').dispatchEvent('change');
+    await page.waitForTimeout(150);
+    assert.equal(await page.locator('[data-task]').count(),2,'tasks restore after date change');
     await page.locator('.v2-nav button[data-page="today"]').click();
     assert.match(await page.locator('#v2OverviewTasks').innerText(),/Java メソッド练习/);
     await page.locator('#v2Share').click();
@@ -69,6 +84,18 @@ function listen(){return new Promise(resolve=>server.listen(0,'127.0.0.1',()=>re
     assert.equal(content.format,'momo-study-full-backup');
     assert.equal(content.mainline.mainlines.length,1);
     assert.equal(content.mainline.daily[Object.keys(content.mainline.daily)[0]][0].actualMinutes,0);
+    await page.evaluate(()=>localStorage.clear());
+    await page.reload({waitUntil:'networkidle'});
+    await page.locator('.v2-nav button[data-page="stats"]').click();
+    assert.ok(await page.locator('.top-right input[accept=".json,application/json"]').count(),'restore input exists');
+    await Promise.all([
+      page.waitForEvent('load',{timeout:15000}),
+      page.locator('.top-right input[accept=".json,application/json"]').setInputFiles({name:'v2-backup.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(content))})
+    ]);
+    await page.locator('.v2-nav button[data-page="mainline"]').click();
+    assert.equal(await page.locator('#mlSelect option').count(),1,'restored mainline');
+    assert.equal(await page.locator('[data-task]').count(),2,'restored tasks');
+    assert.equal(await page.locator('[data-task]').first().locator('[data-actual]').inputValue(),'0','restored recorded zero');
     assert.equal(errors.length,0,'Browser errors: '+errors.join(' | '));
     const mobile=await browser.newPage({viewport:{width:375,height:812},isMobile:true});
     mobile.on('pageerror',e=>errors.push('mobile: '+e.message));
@@ -77,7 +104,7 @@ function listen(){return new Promise(resolve=>server.listen(0,'127.0.0.1',()=>re
     await mobile.locator('.v2-nav button[data-page="mainline"]').click();
     assert.ok(await mobile.locator('#mlAdd').isVisible());
     assert.equal(errors.length,0,'Browser errors: '+errors.join(' | '));
-    console.log('PASS: 5 navigation tabs, mainline CRUD, notes/code, storage reload, bilingual, sharing, backup, mobile');
+    console.log('PASS: 5 tabs, mainline CRUD, notes/code, reload, bilingual, AI JSON import, date switching, sharing, backup/restore, mobile');
   }catch(e){console.error('FAIL: '+e.stack);if(page){fs.mkdirSync(path.join(__dirname,'screenshots'),{recursive:true});await page.screenshot({path:path.join(__dirname,'screenshots','failure.png'),fullPage:true}).catch(()=>{})}process.exitCode=1}
   finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve))}
 })();
