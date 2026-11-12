@@ -102,7 +102,7 @@ function setupOverview(){
  $('v2OverviewOpen').onclick=()=>B.goV2('mainline');
  const update=()=>{const d=get(),tasks=d.daily[date()]||[];$('v2OverviewTasks').innerHTML=tasks.length?tasks.map(x=>'<div class="record">'+esc(x.title)+' · '+(x.status==='done'?t('已完成','完了'):x.status==='progress'?t('进行中','進行中'):t('未完成/未开始','未完了・未開始'))+'</div>').join(''):'<p class="hint">'+t('尚无主线任务','メインタスクはまだありません')+'</p>'};
  const orig=B.goV2;B.goV2=p=>{orig(p);if(p==='mainline')render();if(p==='today')update();if(p==='journal'){$('v2DayFeeling').value=(get().reviews[date()]||{}).feeling||'';$('v2DaySummary').value=(get().reviews[date()]||{}).summary||''}applyLanguage()};
- document.querySelector('.v2-nav').addEventListener('click',()=>setTimeout(()=>{update();render();applyLanguage()},0));
+ document.querySelector('.v2-nav').addEventListener('click',()=>{update();render();applyLanguage()});
  window.MomoV2Refresh=update;update();
 }
 function setupPlanAndStats(){
