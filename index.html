@@ -25,7 +25,6 @@
 .category-stat .bar{margin-top:6px}
 .category-stat span{font-variant-numeric:tabular-nums;font-weight:700}
 @media(max-width:480px){.task-grid{grid-template-columns:1fr}.task-grid .wide{grid-column:auto}.task-card{padding:12px}}
-.replan-panel{border:1px solid #cedaf1;background:#f7faff;border-radius:15px;padding:16px;margin:17px 0}.replan-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.replan-output{white-space:pre-line;line-height:1.8;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}.replan-log{font-size:12px;color:var(--muted);margin-top:12px}.replan-log section{padding:8px 0;border-bottom:1px solid var(--line)}@media(max-width:480px){.replan-grid{grid-template-columns:1fr}}
 .v2-page{display:none}.v2-page.active{display:block}.v2-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(100%,540px);z-index:15;display:grid;grid-template-columns:repeat(5,1fr);background:#fff;border-radius:17px 17px 0 0;box-shadow:0 -6px 28px #20304c22;padding:7px 7px max(9px,env(safe-area-inset-bottom))}.v2-nav button{border:0;background:transparent;border-radius:12px;padding:8px 3px;color:#75839a;font-weight:700;font-size:12px}.v2-nav button.active{background:#eef3ff;color:#3569db}.v2-nav button span{display:block;font-size:20px}.shell{padding-bottom:110px}.v2-top{padding:16px;background:linear-gradient(135deg,#eff4ff,#f8fbff);border-radius:16px;display:flex;justify-content:space-between;margin-bottom:16px}.v2-top strong{font-size:24px;display:block}.v2-tabbar{display:grid;grid-template-columns:1fr 1fr;background:#eef2f8;border-radius:13px;padding:5px;gap:4px;margin-bottom:15px}.v2-tabbar button{border:0;background:transparent;color:#61728d;border-radius:10px;padding:12px;font-weight:700}.v2-tabbar button.active{background:#fff;color:#3367d8}.v2-sub{display:none}.v2-sub.active{display:block}.v2-task-compact .task-card .task-grid,.v2-task-compact .task-card .task-tags,.v2-task-compact .task-card .field,.v2-task-compact .task-card .task-preview{display:none}.v2-task-compact .task-card.open .task-grid{display:grid}.v2-task-compact .task-card.open .task-tags{display:flex}.v2-task-compact .task-card.open .field{display:flex}.v2-task-compact .task-card.open .task-preview{display:block}.v2-task-compact .task-card .task-head h3{flex:1;cursor:pointer;padding:8px 0}.v2-task-compact .task-card .task-head h3:after{content:" ▾";color:#71819e}.v2-task-compact .task-card.open .task-head h3:after{content:" ▴"}.v2-modal{display:none;position:fixed;inset:0;z-index:30;background:#14264580;justify-content:center;align-items:flex-end}.v2-modal.active{display:flex}.v2-sheet{background:white;width:min(100%,580px);max-height:94dvh;overflow:auto;border-radius:22px 22px 0 0;padding:22px 18px 38px}.v2-preview{padding:13px;background:#f2f6ff;border-radius:11px;line-height:1.6}.v2-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}.v2-row>*{min-width:0}.v2-tplrow{display:grid;grid-template-columns:1fr 95px auto;gap:8px;margin:9px 0}.v2-tplrow input{min-width:0}.v2-note{color:#72829a;font-size:12px;line-height:1.6}@media(max-width:820px){.grid{display:block}.column{display:block}.card{margin-bottom:16px}}@media(max-width:500px){.v2-tplrow{grid-template-columns:1fr 75px auto}.shell{padding-bottom:110px}}
 #addTask{display:none}#v2-today-slot .task-head{cursor:default}\n.v2-extra{display:grid;gap:14px}.v2-extra .card{margin:0}.v2-extra textarea{width:100%;min-height:100px}.v2-extra .v2-inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.v2-extra .v2-inline>*{flex:1;min-width:110px}.v2-extra .v2-item{border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}.v2-extra .v2-item textarea{min-height:65px}.v2-extra .v2-actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.v2-extra .v2-actions button{flex:1}.v2-extra pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f7fb;padding:12px;border-radius:10px}.v2-extra .v2-status{font-size:12px;color:var(--muted)}.v2-nav button{font-size:11px}.v2-lang{display:flex;gap:6px;align-items:center}.v2-lang select{width:auto}\n</style>
 </head>
@@ -34,16 +33,9 @@
 
 <section class="grid"><div class="column">
 <div class="card"><div class="card-head"><h2>今日朝活</h2><input class="input date" type="date" id="date" aria-label="记录日期"></div>
-<div class="field-grid"><div class="field"><label for="wake">起床时间</label><input class="input" type="time" id="wake"></div><div class="field"><label for="leave">出门时间</label><input class="input" type="time" id="leave"></div><div class="field"><label for="arrive">星巴克到达</label><input class="input" type="time" id="arrive"></div></div>
+<div class="field-grid"><div class="field"><label for="wake">起床时间</label><input class="input" type="time" id="wake"></div><div class="field"><label for="leave">出门时间</label><input class="input" type="time" id="leave"></div><div class="field"><label for="arrive">自习点到达时间</label><input class="input" type="time" id="arrive"></div></div>
 <p class="hint">按到达时间自动计算晨间日记15分钟、背单词10分钟，随后安排学习任务。计划时间不等于实际完成时间。</p><hr class="section-sep"><ol class="timeline" id="timeline"></ol>
 <div class="field" style="margin-top:18px"><label for="morningJournal">晨间日记 · 今日记录</label><textarea id="morningJournal" rows="5" maxlength="20000" placeholder="今天的状态：&#10;今天最重要的一件事：&#10;此刻的想法或感受："></textarea><p class="hint" style="margin:0">按当前选择的日期自动保存；切换到历史日期即可查看或修改当天日记。填写文字不会自动勾选“日记已完成”。</p></div>
-<div class="replan-panel"><div class="task-head"><h3>现在重新安排</h3><span class="pill">保留原计划</span></div><p class="hint">只重新安排未完成任务。先预览，再确认；实际学习分钟数需要手动填写。</p><div class="replan-grid">
-<div class="field"><label>重新开始时间</label><input class="input" id="replanNow" type="time"></div><div class="field"><label>最晚结束时间</label><input class="input" id="replanEnd" type="time" value="08:45"></div>
-<div class="field"><label>未完成的日记</label><select class="input" id="journalChoice"><option value="skip">跳过</option><option value="short">缩短为5分钟</option><option value="keep">保留15分钟</option><option value="later">延期</option></select></div>
-<div class="field"><label>未完成的单词</label><select class="input" id="vocabChoice"><option value="keep">保留10分钟</option><option value="short">缩短为5分钟</option><option value="later">延期</option><option value="skip">跳过</option></select></div></div>
-<div class="field" style="margin-top:12px"><label>调整原因（可选）</label><input class="input" id="replanReason" placeholder="例如：修改网站占用了时间"></div>
-<div class="actions" style="margin-top:12px"><button class="btn" id="replanNowBtn" type="button">读取当前时间</button><button class="btn primary" id="replanPreviewBtn" type="button">预览新安排</button><button class="btn" id="replanApplyBtn" type="button" disabled>确认调整</button></div>
-<div id="replanOutput" class="replan-output" hidden></div><div id="replanLog" class="replan-log"></div></div>
 <div class="mini-row" style="margin-top:12px"><label class="checkbox"><input type="checkbox" id="journalDone">日记已完成</label><label class="checkbox"><input type="checkbox" id="vocabDone">背单词已完成</label></div></div>
 <div class="card"><div class="task-head"><div><h2>学习任务</h2><p class="hint">随时添加或删除任务，组合任务名称，记录实际时间和感想。</p></div><button type="button" class="btn primary" id="addTask">＋ 添加任务</button></div>
 <div id="taskList" class="task-list"></div>
@@ -92,7 +84,7 @@ const normalize=d=>{
  }
  return v;
 };
-let categories=[...DEFAULT_TAGS],db={},current=today(),active=null,replanDraft=null;const PLAN_KEY='momo-study-default-plan-v2';let plan={start:'06:50',end:'08:45',journal:'15',vocab:'10',tasks:[{name:'Java学习',minutes:'90'}]};try{const p=JSON.parse(localStorage.getItem(PLAN_KEY)||'null');if(p&&Array.isArray(p.tasks))plan=p}catch(e){}
+let categories=[...DEFAULT_TAGS],db={},current=today(),active=null;const PLAN_KEY='momo-study-default-plan-v2';let plan={start:'06:50',end:'08:45',journal:'15',vocab:'10',tasks:[{name:'Java学习',minutes:'90'}]};try{const p=JSON.parse(localStorage.getItem(PLAN_KEY)||'null');if(p&&Array.isArray(p.tasks))plan=p}catch(e){}
 try{const a=JSON.parse(localStorage.getItem(TAG_KEY)||'null');if(Array.isArray(a))categories=[...new Set([...DEFAULT_TAGS,...a.filter(x=>typeof x==='string'&&x.trim()&&x.length<=40)])]}catch(e){}
 try{const old=JSON.parse(localStorage.getItem(KEY)||'{}');if(old&&typeof old==='object'&&!Array.isArray(old)){const records=old.records&&typeof old.records==='object'?old.records:old;for(const [k,v] of Object.entries(records))if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&v&&typeof v==='object')db[k]=normalize(v)}}catch(e){alert('本地记录读取失败，请使用备份文件恢复。')}
 /* No hard-coded daily sample data. */
@@ -114,7 +106,7 @@ const originalTaskTime=t=>{
  const n=nonneg(t.planned);
  return n===null?clock(from)+' 开始 · 计划时长待填':range(from,n)+'（计划 '+n+' 分钟）';
 };
-const taskTime=t=>t.adjustedStart&&t.adjustedMinutes!==''?'原计划：'+originalTaskTime(t)+' ｜ 调整后：'+range(min(t.adjustedStart),Number(t.adjustedMinutes))+'（'+t.adjustedMinutes+'分钟）'+(Number(t.carryMinutes)>0?'；剩余'+t.carryMinutes+'分钟待安排':''):t.carryMinutes&&Number(t.carryMinutes)>0?'原计划：'+originalTaskTime(t)+' ｜ 未排入，剩余'+t.carryMinutes+'分钟':originalTaskTime(t);
+const taskTime=t=>originalTaskTime(t);
 const taskMarkup=(t,i)=>'<article class="task-card" data-id="'+esc(t.id)+'">'+
  '<div class="task-head"><h3 tabindex="0">'+esc(t.tags.join(' + ')||t.content.slice(0,22)||'学习任务 '+(i+1))+' · '+esc(t.planned)+'分钟</h3><div class="task-actions"><button type="button" class="btn danger" data-remove="'+i+'">删除</button></div></div>'+
  '<div class="field"><label>任务名称（支持多选组合）</label><div class="task-tags" data-tags="'+i+'">'+tagButtons(t.tags,i)+'</div></div>'+
@@ -130,16 +122,16 @@ const taskMarkup=(t,i)=>'<article class="task-card" data-id="'+esc(t.id)+'">'+
 const updateTaskPreviews=()=>{record().tasks.forEach((t,i)=>{const el=document.querySelector('[data-preview="'+i+'"]');if(el)el.textContent=taskTime(t)})};
 const renderTasks=()=>{$('taskList').innerHTML=record().tasks.length?record().tasks.map(taskMarkup).join(''):'<p class="empty">暂无学习任务，请点击“添加任务”。</p>'};
 const renderTimeline=()=>{
- const a=min(record().arrive);
- const d=record(),morning=d.morningPlan||{};const adjusted=(key,start,minutes)=>{const orig=range(start,minutes),c=morning[key];if(!c)return orig;return orig+' → '+(c.status==='skip'?'已跳过':c.status==='later'?'已延期':c.status==='scheduled'?range(min(c.start),Number(c.minutes)):'已调整')};const lines=[['晨间日记','15分钟',adjusted('journal',a,15)],['背单词','10分钟',adjusted('vocab',a===null?null:a+15,10)]];
- $('timeline').innerHTML=lines.map(([name,desc,time])=>'<li class="item"><span class="time">'+time+'</span><span class="track"><span class="dot"></span><span class="stem"></span></span><span><span class="item-name">'+name+'</span><br><span class="item-desc">'+desc+'</span></span></li>').join('');
+ const arrival=min(record().arrive),j=nonneg(plan.journal)??15,v=nonneg(plan.vocab)??10;
+ const rows=[['晨间日记',j,arrival,record().journalDone,record().journalActual],['背单词',v,arrival===null?null:arrival+j,record().vocabDone,record().vocabActual]];
+ $('timeline').innerHTML=rows.map(([name,planned,start,done,actual])=>'<li class="item"><span class="time">'+range(start,planned)+'</span><span class="track"><span class="dot"></span><span class="stem"></span></span><span><span class="item-name">'+name+'</span><br><span class="item-desc">原定 '+planned+'分钟 · '+(done?'已完成':'未完成')+' · 实际 '+(actual===''?'未记录':actual+'分钟')+'</span></span></li>').join('');
  updateTaskPreviews();
 };
 const renderNames=()=>{
  const custom=categories.filter(t=>!DEFAULT_TAGS.includes(t));
  $('customTags').innerHTML=custom.length?custom.map(t=>'<span class="tag-choice" style="display:inline-flex;gap:5px;align-items:center">'+esc(t)+' <button type="button" class="tag-remove" data-remove-tag="'+encodeURIComponent(t)+'">×</button></span>').join(''):'<p class="hint">暂无自定义名称</p>';
 };
-const show=()=>{active=normalize(db[current]||{tasks:plan.tasks.map(t=>({id:uid(),tags:[t.name],content:'',planned:t.minutes,status:'planned'}))});$('date').value=current;for(const field of ['wake','leave','arrive','morningJournal','reflection'])$(field).value=active[field];for(const field of ['journalDone','vocabDone'])$(field).checked=active[field];renderTasks();renderNames();renderTimeline();renderReplanLog();updateStats();updateHistory();replanDraft=null;$('replanOutput').hidden=true;$('replanApplyBtn').disabled=true};
+const show=()=>{active=normalize(db[current]||{tasks:plan.tasks.map(t=>({id:uid(),tags:[t.name],content:'',planned:t.minutes,status:'planned'}))});$('date').value=current;for(const field of ['wake','leave','arrive','morningJournal','reflection'])$(field).value=active[field];for(const field of ['journalDone','vocabDone'])$(field).checked=active[field];renderTasks();renderNames();renderTimeline();updateStats();updateHistory()};
 const actualMinutes=d=>(d.tasks||[]).reduce((a,t)=>a+(nonneg(t.actual)??0),0);
 const updateStats=()=>{
  const keys=Object.keys(db).filter(k=>k<=today()).sort(),known=keys.filter(k=>{const d=db[k];return !!(d.wake||d.leave||d.arrive||d.morningJournal||d.reflection||d.journalDone||d.vocabDone||d.tasks?.some(t=>t.content||t.actual||t.goal||t.feeling))});
@@ -168,9 +160,9 @@ const toast=s=>{const e=$('toast');e.textContent=s;e.classList.add('show');setTi
 const download=(filename,content,type)=>{const url=URL.createObjectURL(new Blob([content],{type}));const link=document.createElement('a');link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 const summary=()=>{
  const d=record(),a=min(d.arrive);
- let out='【朝活记录｜'+current+'】\n起床：'+(d.wake||'未填')+'\n出门：'+(d.leave||'未填')+'\n到达星巴克：'+(d.arrive||'未填')+'\n晨间日记：'+range(a,15)+' '+(d.journalDone?'已完成':'未确认')+'\n背单词：'+range(a===null?null:a+15,10)+' '+(d.vocabDone?'已完成':'未确认');
+ let out='【朝活记录｜'+current+'】\n起床：'+(d.wake||'未填')+'\n出门：'+(d.leave||'未填')+'\n到达自习点：'+(d.arrive||'未填')+'\n晨间日记：'+range(a,15)+' '+(d.journalDone?'已完成':'未确认')+'\n背单词：'+range(a===null?null:a+15,10)+' '+(d.vocabDone?'已完成':'未确认');
  d.tasks.forEach((t,i)=>{out+='\n\n【学习任务'+(i+1)+'】\n名称：'+(t.tags.join(' + ')||'未分类')+'\n内容：'+(t.content||'未填')+'\n时间：'+taskTime(t)+'\n计划：'+(t.planned||'未填')+'分钟；实际：'+(t.actual||'未填')+'分钟\n状态：'+({planned:'计划中',progress:'进行中',done:'已完成'}[t.status])+'\n成果：'+(t.goal||'未填')+'\n感想：'+(t.feeling||'未填')});
- return out+'\n\n晨间日记：'+(d.morningJournal||'未填写')+'\n今日复盘：'+(d.reflection||'未填写')+'\n重新安排次数：'+(d.replanHistory||[]).length;
+ return out+'\n\n晨间日记：'+(d.morningJournal||'未填写')+'\n今日复盘：'+(d.reflection||'未填写');
 };
 const onTaskChange=e=>{
  const el=e.target.closest('[data-field]');if(!el)return;
@@ -218,58 +210,12 @@ $('csvBtn').onclick=()=>{
  const csv='\ufeff'+rows.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\r\n');download('study-journal-'+today()+'.csv',csv,'text/csv;charset=utf-8');
 };
 
-const nowClock=()=>{const d=new Date();return clock(d.getHours()*60+d.getMinutes())};
-const renderReplanLog=()=>{$('replanLog').innerHTML=(record().replanHistory||[]).slice(-6).reverse().map(x=>'<section><strong>'+esc(x.at)+'</strong> '+esc(x.reason||'调整计划')+'<div>'+esc(x.summary).replace(/\n/g,' / ')+'</div></section>').join('')};
-const buildReplan=()=>{
- if(current!==today())throw Error('请先选择今天的日期，再使用自动重新安排');
- const start=min($('replanNow').value),end=min($('replanEnd').value);
- if(start===null||end===null||end<=start)throw Error('请填写有效的起止时间，结束须晚于开始');
- let cursor=start;const changes=[],messages=[];
- for(const spec of [['journal','journalDone','journalChoice','晨间日记',15],['vocab','vocabDone','vocabChoice','背单词',10]]){
-  const [key,doneField,choiceId,name,full]=spec;
-  if(record()[doneField]){messages.push(name+'：已完成');continue}
-  const choice=$(choiceId).value,desired=choice==='keep'?full:choice==='short'?5:0;
-  if(!desired){changes.push({kind:'morning',key,status:choice});messages.push(name+'：'+(choice==='skip'?'跳过':'延期'));continue}
-  const use=Math.min(desired,Math.max(0,end-cursor));
-  if(use){changes.push({kind:'morning',key,status:'scheduled',start:clock(cursor),minutes:String(use)});messages.push(name+'：'+range(cursor,use));cursor+=use}
-  else{changes.push({kind:'morning',key,status:'later'});messages.push(name+'：时间不足，延期')}
- }
- for(const task of record().tasks){
-  const name=task.tags.join('+')||task.content.slice(0,18)||'学习任务';
-  if(task.status==='done'){messages.push(name+'：已完成');continue}
-  const planned=nonneg(task.planned);
-  if(planned===null){messages.push(name+'：计划时长未知，暂不调整');continue}
-  const remainder=Math.max(0,planned-(nonneg(task.actual)||0));
-  if(!remainder){messages.push(name+'：已达到计划分钟数');continue}
-  const use=Math.min(remainder,Math.max(0,end-cursor));
-  changes.push({kind:'task',id:task.id,start:use?clock(cursor):'',minutes:use?String(use):'',carry:String(remainder-use)});
-  messages.push(name+'：'+(use?range(cursor,use)+'（'+use+'分钟）':'本次延期')+(remainder-use?'，余'+(remainder-use)+'分钟待安排':''));
-  cursor+=use;
- }
- if(cursor<end)messages.push('缓冲：'+(end-cursor)+'分钟');
- return {changes,summary:messages.join('\n'),reason:$('replanReason').value.trim(),start:clock(start),end:clock(end)};
-};
-$('replanNowBtn').onclick=()=>{$('replanNow').value=nowClock();replanDraft=null;$('replanOutput').hidden=true;$('replanApplyBtn').disabled=true};
-$('replanPreviewBtn').onclick=()=>{try{replanDraft=buildReplan();$('replanOutput').textContent=replanDraft.summary;$('replanOutput').hidden=false;$('replanApplyBtn').disabled=false}catch(e){alert(e.message)}};
-for(const id of ['replanNow','replanEnd','journalChoice','vocabChoice','replanReason'])$(id).addEventListener('input',()=>{replanDraft=null;$('replanApplyBtn').disabled=true});
-$('replanApplyBtn').onclick=()=>{
- if(!replanDraft)return;
- const d=record(),p=replanDraft;
- const before={morningPlan:JSON.parse(JSON.stringify(d.morningPlan||{})),tasks:d.tasks.map(t=>({id:t.id,planned:t.planned,start:t.start,actual:t.actual,adjustedStart:t.adjustedStart,adjustedMinutes:t.adjustedMinutes,carryMinutes:t.carryMinutes}))};
- for(const change of p.changes){
-  if(change.kind==='morning')d.morningPlan[change.key]={status:change.status,start:change.start||'',minutes:change.minutes||''};
-  if(change.kind==='task'){const t=d.tasks.find(t=>t.id===change.id);if(t){t.adjustedStart=change.start;t.adjustedMinutes=change.minutes;t.carryMinutes=change.carry}}
- }
- d.replanHistory.push({at:new Date().toLocaleString('zh-CN',{hour12:false}),reason:p.reason,summary:p.summary,original:before});
- d.replanHistory=d.replanHistory.slice(-50);
- persist();renderTimeline();renderReplanLog();
- replanDraft=null;$('replanApplyBtn').disabled=true;toast('调整已保存，原计划和修改记录保留');
-};
+show();
 
-$('replanNow').value=nowClock();show();
+
 
 const app=document.createElement('div');app.innerHTML='<section class="v2-page active" id="v2-today"><div class="v2-top"><div><span class="v2-note">完成任务</span><strong id="v2Count">0 / 0</strong></div><div style="text-align:right"><span class="v2-note">起床时间</span><strong id="v2Wake">--:--</strong></div></div><div id="v2-today-slot"></div><div class="v2-row"><button class="btn primary" id="v2Share">分享今日记录 · 小红书</button><button class="btn" id="v2Add">＋ 添加任务</button></div></section><section class="v2-page" id="v2-plan"><div class="v2-tabbar"><button data-sub="default" class="active">默认计划</button><button data-sub="daily">当天计划</button></div><div class="v2-sub active" id="v2-default"><div class="card"><h2>默认时间</h2><p class="v2-note">用于尚未保存记录的日期，不覆盖已经保存的计划。</p><div class="field-grid"><div class="field"><label>开始</label><input class="input" id="v2Start" type="time"></div><div class="field"><label>结束</label><input class="input" id="v2End" type="time"></div><div class="field"><label>晨间日记分钟</label><input class="input" id="v2DiaryMins" type="number" min="0"></div><div class="field"><label>背单词分钟</label><input class="input" id="v2VocabMins" type="number" min="0"></div></div><button class="btn primary" id="v2SaveTimes" style="margin-top:12px">保存默认时间</button></div><div class="card"><h2>默认学习任务</h2><p class="v2-note">名称＋计划分钟。新增日期会读取这些任务。</p><div id="v2Template"></div><div class="v2-row"><button class="btn" id="v2AddTemplate">＋ 新增</button><button class="btn primary" id="v2SaveTemplate">保存默认任务</button></div></div><div id="v2-tags"></div></div><div class="v2-sub" id="v2-daily"><div class="card"><h2>当天临时计划</h2><p class="v2-note">只修改所选日期，不影响默认计划。</p><div class="v2-row"><button class="btn primary" id="v2DailyAdd">＋ 添加当天任务</button><button class="btn" id="v2GoToday">返回今日</button></div><div id="v2DailyList"></div></div></div></section><section class="v2-page" id="v2-journal"><div class="card"><h2>晨间日记</h2><p class="v2-note">自由书写，自动保存在顶部选择的日期。默认不分享到小红书。</p><div id="v2-diary"></div></div><div class="card"><h2>历史日记</h2><div id="v2DiaryHistory"></div></div></section><section class="v2-page" id="v2-stats"><div id="v2-stat-slot"></div><div class="card"><h2>备份与恢复</h2><p class="v2-note">记录只保存在当前浏览器，记得备份。</p><div id="v2-backup"></div></div></section>';
-app.insertAdjacentHTML('beforeend','<section class="v2-page" id="v2-mainline"><div id="v2-mainline-root"></div></section>');const original=document.querySelector('section.grid'),l=original.children[0],r=original.children[1];const morning=l.children[0],tasksCard=l.children[1],stat=r.children[0],category=r.children[1],tagsPanel=r.children[2],history=r.children[3],notes=r.children[4];original.replaceWith(app);$('v2-today-slot').append(morning,tasksCard);const morningFold=document.createElement('details');morningFold.className='card';morningFold.innerHTML='<summary style="cursor:pointer;font-weight:700;padding:3px 0">朝活时间 · 现在重新安排</summary>';morning.replaceWith(morningFold);morningFold.append(morning);morning.classList.remove('card');morning.style.boxShadow='none';morning.style.border='0';morning.style.padding='10px 0 0';$('v2-tags').append(tagsPanel);$('v2-stat-slot').append(stat,category,history,notes);
+app.insertAdjacentHTML('beforeend','<section class="v2-page" id="v2-mainline"><div id="v2-mainline-root"></div></section>');const original=document.querySelector('section.grid'),l=original.children[0],r=original.children[1];const morning=l.children[0],tasksCard=l.children[1],stat=r.children[0],category=r.children[1],tagsPanel=r.children[2],history=r.children[3],notes=r.children[4];original.replaceWith(app);$('v2-today-slot').append(morning,tasksCard);const morningFold=document.createElement('details');morningFold.className='card';morningFold.open=true;morningFold.innerHTML='<summary style="cursor:pointer;font-weight:700;padding:3px 0">晨间计划与实际记录</summary>';morning.replaceWith(morningFold);morningFold.append(morning);morning.classList.remove('card');morning.style.boxShadow='none';morning.style.border='0';morning.style.padding='10px 0 0';$('v2-tags').append(tagsPanel);$('v2-stat-slot').append(stat,category,history,notes);
 const diaryField=$('morningJournal').closest('.field');if(diaryField)$('v2-diary').append(diaryField);
 const backups=document.querySelector('.top-right');if(backups){backups.style.display='flex';$('v2-backup').append(backups)}const csvBtn=$('csvBtn');if(csvBtn)$('v2-backup').append(csvBtn);
 tasksCard.classList.add('v2-task-compact');const nav=document.createElement('nav');nav.className='v2-nav';nav.innerHTML=[['today','⌂','今日'],['plan','▦','计划'],['mainline','◎','主线'],['journal','▤','日记'],['stats','▥','统计']].map(x=>'<button data-page="'+x[0]+'" class="'+(x[0]==='today'?'active':'')+'"><span>'+x[1]+'</span>'+x[2]+'</button>').join('');document.body.append(nav);
@@ -325,8 +271,8 @@ function postBody(){
  }
  // The legacy routine checkboxes do not establish actual minutes.
  const jp=d.journalDone?'done':'planned',vp=d.vocabDone?'done':'planned';
- lines.unshift(description('背单词',plan.vocab,'',vp));
- lines.unshift(description('晨间日记',plan.journal,'',jp));
+ lines.unshift(description('背单词',plan.vocab,d.vocabActual||'',vp));
+ lines.unshift(description('晨间日记',plan.journal,d.journalActual||'',jp));
  const diary=d.morningJournal.trim()||'（当天晨间日记尚未填写）';
  const reflection=(v2?.reviews?.[current]?.summary||'').trim()||d.reflection.trim()||'（尚未填写）';
  return '【晨间日记】\n'+diary+
