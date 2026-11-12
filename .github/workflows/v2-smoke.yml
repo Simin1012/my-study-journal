@@ -26,6 +26,13 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Run browser smoke tests
         run: node tests/smoke.cjs
+      - name: Verify branch preview CDN
+        continue-on-error: true
+        run: |
+          curl -L -sS --max-time 20 -o /tmp/v2-preview.html -w 'Preview status: %{http_code}, MIME: %{content_type}\\n' 'https://raw.githack.com/Simin1012/my-study-journal/v2-development/index.html'
+          grep -q '学习与成长记录' /tmp/v2-preview.html
+          curl -L -sS --max-time 20 -o /tmp/v2-enhancements.js -w 'Script status: %{http_code}, MIME: %{content_type}\\n' 'https://raw.githack.com/Simin1012/my-study-journal/v2-development/js/v2-enhancements.js'
+          grep -q 'setupOverview' /tmp/v2-enhancements.js
       - name: Upload screenshots on failure
         if: failure()
         uses: actions/upload-artifact@v4
