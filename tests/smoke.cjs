@@ -45,7 +45,7 @@ function listen(){return new Promise(resolve=>server.listen(0,'127.0.0.1',()=>re
     await page.locator('[data-note] [data-save-note]').click();
     await page.locator('[data-note] [data-code]').fill('public int add(int a,int b){return a+b;}');
     await page.locator('[data-note] [data-add-code]').click();
-    assert.match(await page.locator('#mlNotes').innerText(),/public int add/);
+    assert.match(await page.locator('#mlNotes pre').first().textContent(),/public int add/);
     await page.reload({waitUntil:'networkidle'});
     await page.locator('.v2-nav button[data-page="mainline"]').click();
     assert.equal(await page.locator('#mlProgress').inputValue(),'Section 11 Lesson 65');
