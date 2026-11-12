@@ -94,18 +94,32 @@ function applyLanguage(){
  });
  if(window.MomoI18n)window.MomoI18n.apply();
 }
+function dailySummary(key=date()){
+ const d=get().reviews[key]||{};
+ if(Object.prototype.hasOwnProperty.call(d,'mergedSummary'))return String(d.mergedSummary??'');
+ const old=key===date()?B.record().reflection:(B.getDb()[key]?.reflection||'');
+ return [...new Set([old,d.feeling,d.summary].map(x=>String(x||'').trim()).filter(Boolean))].join('\n\n');
+}
 function setupJournal(){
  const host=$('v2-diary');if(!host)return;
- const box=document.createElement('div');box.className='card v2-extra';box.innerHTML='<h2 id="v2JournalExtraTitle">学习感想与今日总结</h2><div class="field"><label id="v2FeelingLabel">学习感想</label><textarea class="input" id="v2DayFeeling"></textarea></div><div class="field"><label id="v2SummaryLabel">今日总结</label><textarea class="input" id="v2DaySummary"></textarea></div><button class="btn primary" id="v2SaveJournalExtra">保存补充日记</button>';host.append(box);
- const load=()=>{const d=get();const v=d.reviews[date()]||{};$('v2DayFeeling').value=v.feeling||'';$('v2DaySummary').value=v.summary||''};
- $('v2SaveJournalExtra').onclick=()=>{const d=get();d.reviews[date()]={...(d.reviews[date()]||{}),feeling:$('v2DayFeeling').value,summary:$('v2DaySummary').value};if(safeSave(d))B.toast(t('已保存','保存しました'))};
- $('date').addEventListener('change',()=>setTimeout(()=>{load();render();if(typeof window.MomoV2Refresh==='function')window.MomoV2Refresh()},0));load();
+ const legacy=$('reflection')?.closest('.field');
+ if(legacy){legacy.hidden=true;legacy.style.display='none'}
+ const box=document.createElement('div');box.className='card v2-extra';
+ box.innerHTML='<h2 id="v2JournalExtraTitle">'+t('总结','振り返り')+'</h2><p class="hint">'+t('记录今天学了什么、遇到的问题和感受。学习感想与今日总结合并在这里，旧内容会保留。','今日学んだこと・疑問・感想をまとめて記録します。以前の内容も残ります。')+'</p><div class="field"><label for="v2DaySummary">'+t('总结','振り返り')+'</label><textarea class="input" id="v2DaySummary" rows="7" placeholder="'+t('今天的学习情况、收获、感想、下次改进……','今日の学習内容・成果・感想・次に改善したいこと……')+'"></textarea></div><button class="btn primary" id="v2SaveJournalExtra">'+t('保存总结','振り返りを保存')+'</button>';
+ host.append(box);
+ const load=()=>{$('v2DaySummary').value=dailySummary()};
+ $('v2SaveJournalExtra').onclick=()=>{
+   const d=get();d.reviews[date()]={...(d.reviews[date()]||{}),mergedSummary:$('v2DaySummary').value};
+   if(safeSave(d))B.toast(t('总结已保存','振り返りを保存しました'));
+ };
+ $('date').addEventListener('change',()=>setTimeout(()=>{load();render();if(typeof window.MomoV2Refresh==='function')window.MomoV2Refresh()},0));
+ load();
 }
 function setupOverview(){
  const slot=$('v2-today-slot'),box=document.createElement('div');box.className='card';box.innerHTML='<div class="card-head"><h2 id="v2OverviewTitle">今日主线任务</h2><button class="btn" id="v2OverviewOpen">查看主线</button></div><div id="v2OverviewTasks"></div>';slot.prepend(box);
  $('v2OverviewOpen').onclick=()=>B.goV2('mainline');
  const update=()=>{const d=get(),tasks=d.daily[date()]||[];$('v2OverviewTasks').innerHTML=tasks.length?tasks.map(x=>'<div class="record">'+esc(x.title)+' · '+(x.status==='done'?t('已完成','完了'):x.status==='progress'?t('进行中','進行中'):t('未完成/未开始','未完了・未開始'))+'</div>').join(''):'<p class="hint">'+t('尚无主线任务','メインタスクはまだありません')+'</p>'};
- const orig=B.goV2;B.goV2=p=>{orig(p);if(p==='mainline')render();if(p==='today')update();if(p==='journal'){$('v2DayFeeling').value=(get().reviews[date()]||{}).feeling||'';$('v2DaySummary').value=(get().reviews[date()]||{}).summary||''}applyLanguage()};
+ const orig=B.goV2;B.goV2=p=>{orig(p);if(p==='mainline')render();if(p==='today')update();if(p==='journal')$('v2DaySummary').value=dailySummary();applyLanguage()};
  document.querySelector('.v2-nav').addEventListener('click',()=>{update();render();applyLanguage()});
  window.MomoV2Refresh=update;update();
 }
