@@ -44,6 +44,7 @@ function listen(){return new Promise(resolve=>server.listen(0,'127.0.0.1',()=>re
     assert.equal(await page.locator('#mlSelect option').count(),1);
     assert.ok(await page.locator('.v2-guide-steps').isVisible(),'daily workflow explained');
     assert.ok(await page.locator('#mlAiCard').isVisible(),'AI plan assistant visible at top');
+    assert.ok(await page.locator('#mlFromChat').isVisible(),'Convert prior ChatGPT conversation button visible');
     assert.ok(await page.locator('#mlImport').isVisible(),'AI JSON input is not hidden in details');
     await page.locator('#mlProgress').fill('Section 11 Lesson 65');
     await page.locator('#mlSave').click();
@@ -89,9 +90,10 @@ function listen(){return new Promise(resolve=>server.listen(0,'127.0.0.1',()=>re
     assert.match(await page.locator('#taskList .task-card h3').first().textContent(),/Java学习 · \d+分钟/);
     await page.locator('.v2-nav button[data-page="mainline"]').click();
     assert.ok(await page.locator('#mlImport').isVisible(),'AI plan import is directly visible');
-    await page.locator('#mlImport').fill(JSON.stringify({tasks:[{title:'SQL查询练习',plannedMinutes:30}]}));
+    await page.locator('#mlImport').fill([String.fromCharCode(96).repeat(3)+'json',JSON.stringify({tasks:[{title:'SQL查询练习',plannedMinutes:null,start:'12:00'}]}),String.fromCharCode(96).repeat(3)].join('\n'));
     await page.locator('#mlPreview').click();
     assert.equal(await page.locator('#mlApply').isEnabled(),true);
+    assert.match(await page.locator('#mlImportPreview').innerText(),/时长未记录/);
     await page.locator('#mlApply').click();
     assert.equal(await page.locator('[data-task]').count(),2);
     await page.locator('#v2GlobalDate').fill('2026-12-01');
