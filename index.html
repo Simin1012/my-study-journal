@@ -61,6 +61,8 @@
 const KEY='momo-study-journal-v1', TAG_KEY='momo-study-task-names-v1';
 const DEFAULT_TAGS=['背单词','晨间日记','Java学习','AI沟通'];
 const $=id=>document.getElementById(id);
+const confirm=msg=>window.confirm(window.MomoI18n?.translate(msg)||msg);
+const alert=msg=>window.alert(window.MomoI18n?.translate(msg)||msg);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const today=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')};
 const moveDate=(v,n)=>{const d=new Date(v+'T12:00:00');d.setDate(d.getDate()+n);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')};
@@ -156,7 +158,7 @@ const updateHistory=()=>{
  const keys=Object.keys(db).sort().reverse();
  $('history').innerHTML=keys.length?keys.map(k=>{const d=db[k],tags=[...new Set((d.tasks||[]).flatMap(t=>t.tags||[]))].slice(0,3).join(' + ')||'未分类';return '<div class="record"><div><strong>'+esc(k)+'</strong><div class="meta">'+esc(tags)+' · '+(d.tasks||[]).length+'项任务 · 实际'+actualMinutes(d)+'分钟</div></div><div class="record-actions"><button class="btn small" data-load="'+k+'">查看</button><button class="btn small danger" data-delete="'+k+'">删除</button></div></div>'}).join(''):'<p class="empty">暂无历史记录</p>';
 };
-const toast=s=>{const e=$('toast');e.textContent=s;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2400)};
+const toast=s=>{const e=$('toast');e.textContent=window.MomoI18n?.translate(s)||s;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2400)};
 const download=(filename,content,type)=>{const url=URL.createObjectURL(new Blob([content],{type}));const link=document.createElement('a');link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 const summary=()=>{
  const d=record(),a=min(d.arrive);
