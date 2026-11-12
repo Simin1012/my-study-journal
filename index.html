@@ -277,11 +277,14 @@ function postBody(){
  lines.unshift(description('背单词',plan.vocab,d.vocabActual||'',vp));
  lines.unshift(description('晨间日记',plan.journal,d.journalActual||'',jp));
  const diary=d.morningJournal.trim()||'（当天晨间日记尚未填写）';
- const reflection=(v2?.reviews?.[current]?.summary||'').trim()||d.reflection.trim()||'（尚未填写）';
+ const review=v2?.reviews?.[current]||{};
+ const reflection=Object.prototype.hasOwnProperty.call(review,'mergedSummary')
+   ?String(review.mergedSummary||'')
+   :[...new Set([d.reflection,review.feeling,review.summary].map(x=>String(x||'').trim()).filter(Boolean))].join('\\n\\n');
+
  return '【晨间日记】\n'+diary+
  '\n\n【学习计划】\n'+lines.join('\n')+
- '\n\n【学习感想】\n'+(feelings.join('\n')||'（暂无学习感想记录）')+
- '\n\n【今日总结】\n'+reflection+
+ '\n\n【总结】\n'+(reflection||'（尚未填写）')+
  '\n\n#朝活记录 #日本生活 #学习记录';
 }
 function updatePost(){$('v2Title').textContent=postTitle();const p=post();$('v2PublishState').textContent=Number.isInteger(p.publishedNumber)?'已标记发布 D'+p.publishedNumber:'尚未发布';$('v2Published').disabled=Number.isInteger(p.publishedNumber)}
