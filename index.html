@@ -194,7 +194,7 @@ $('newTag').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault(
 $('customTags').addEventListener('click',e=>{const b=e.target.closest('[data-remove-tag]');if(!b)return;const t=decodeURIComponent(b.dataset.removeTag);if(!confirm('从选择列表移除「'+t+'」？历史记录仍会保留名称。'))return;categories=categories.filter(v=>v!==t);localStorage.setItem(TAG_KEY,JSON.stringify(categories));renderNames();renderTasks()});
 $('saveBtn').onclick=()=>{persist();toast('已保存')};
 $('copyBtn').onclick=async()=>{const s=summary();try{await navigator.clipboard.writeText(s);toast('摘要已复制')}catch(e){const ta=document.createElement('textarea');ta.value=s;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('摘要已复制')}};
-$('exportJson').onclick=()=>download('study-journal-backup-'+today()+'.json',JSON.stringify({version:3,records:db,taskNames:categories},null,2),'application/json;charset=utf-8');
+$('exportJson').onclick=()=>download('study-journal-backup-'+today()+'.json',JSON.stringify({version:4,records:db,taskNames:categories,defaultPlan:plan},null,2),'application/json;charset=utf-8');
 $('importBtn').onclick=()=>$('importFile').click();
 $('importFile').addEventListener('change',async e=>{
  const file=e.target.files?.[0];if(!file)return;
@@ -203,7 +203,7 @@ $('importFile').addEventListener('change',async e=>{
    if(!records||typeof records!=='object'||Array.isArray(records)||Object.keys(records).some(k=>!/^\d{4}-\d{2}-\d{2}$/.test(k)))throw Error('备份日期格式不正确');
    if(!confirm('导入将替换相同日期的记录，继续吗？'))return;
    for(const [k,v] of Object.entries(records))if(v&&typeof v==='object'&&!Array.isArray(v))db[k]=normalize(v);
-   if(Array.isArray(obj.taskNames)){categories=[...new Set([...DEFAULT_TAGS,...obj.taskNames.filter(x=>typeof x==='string'&&x.length<=40)])];localStorage.setItem(TAG_KEY,JSON.stringify(categories))}
+   if(obj.defaultPlan&&Array.isArray(obj.defaultPlan.tasks)){plan=obj.defaultPlan;localStorage.setItem(PLAN_KEY,JSON.stringify(plan));renderTemplate()}if(Array.isArray(obj.taskNames)){categories=[...new Set([...DEFAULT_TAGS,...obj.taskNames.filter(x=>typeof x==='string'&&x.length<=40)])];localStorage.setItem(TAG_KEY,JSON.stringify(categories))}
    localStorage.setItem(KEY,JSON.stringify(db));show();toast('导入成功');
  }catch(err){alert('导入失败：'+err.message)}finally{e.target.value=''}
 });
@@ -293,7 +293,24 @@ $('v2SaveTemplate').onclick=()=>{readTemplate();if(plan.tasks.some(t=>!t.name||n
 $('v2SaveTimes').onclick=()=>{if(nonneg($('v2DiaryMins').value)===null||nonneg($('v2VocabMins').value)===null){alert('分钟数不正确');return}plan.start=$('v2Start').value;plan.end=$('v2End').value;plan.journal=$('v2DiaryMins').value;plan.vocab=$('v2VocabMins').value;localStorage.setItem(PLAN_KEY,JSON.stringify(plan));toast('默认时间已保存')};renderTemplate();
 function diaryHistory(){const dates=Object.keys(db).filter(k=>db[k]?.morningJournal).sort().reverse();$('v2DiaryHistory').innerHTML=dates.length?dates.slice(0,25).map(k=>'<div class="record"><div><strong>'+k+'</strong><div class="meta">'+esc(db[k].morningJournal.slice(0,44))+'</div></div><button class="btn small" data-diary="'+k+'">查看</button></div>').join(''):'<p class="empty">暂无日记</p>'}
 $('v2DiaryHistory').onclick=e=>{const b=e.target.closest('[data-diary]');if(!b)return;current=b.dataset.diary;$('date').value=current;show();updateV2();goV2('journal')};
-$('date').addEventListener('change',()=>{updateV2();diaryHistory()});$('taskList').addEventListener('change',()=>setTimeout(updateV2,0));$('taskList').addEventListener('click',()=>setTimeout(updateV2,0));$('journalDone').addEventListener('change',()=>setTimeout(updateV2,0));$('vocabDone').addEventListener('change',()=>setTimeout(updateV2,0));$('wake').addEventListener('input',()=>setTimeout(updateV2,0));updateV2();goV2('today');
+$('date').addEventListener('change',()=>{updateV2();diaryHistory()});$('taskList').addEventListener('change',()=>setTimeout(updateV2,0));$('taskList').addEventListener('click',()=>setTimeout(updateV2,0));$('journalDone').addEventListener('change',()=>setTimeout(updateV2,0));$('vocabDone').addEventListener('change',()=>setTimeout(updateV2,0));$('wake').addEventListener('input',()=>setTimeout(updateV2,0));
+const modal=document.createElement('div');modal.className='v2-modal';modal.id='v2Modal';modal.innerHTML='<div class="v2-sheet"><div class="mini-row" style="justify-content:space-between"><h2>小红书 · 今日分享</h2><button class="btn" id="v2CloseShare">关闭</button></div><p class="v2-note">累计打卡从D0开始。复制不会增加编号；确认发布后才增加。</p><div class="field"><label>今天的一句话总结</label><input class="input" id="v2Summary" maxlength="100" placeholder="计划被打乱，也没关系"></div><h3 style="margin-top:14px">标题预览</h3><div class="v2-preview" id="v2Title"></div><div class="v2-row"><button class="btn" id="v2CopyTitle">复制标题</button></div><div class="field" style="margin-top:12px"><label>正文（可修改）</label><textarea class="input" id="v2Body" rows="10"></textarea></div><div class="v2-row"><button class="btn" id="v2Generate">从实际记录生成正文</button><button class="btn" id="v2CopyBody">复制正文</button><button class="btn primary" id="v2CopyAll">全部复制</button></div><hr class="section-sep"><div class="v2-row"><button class="btn" id="v2Published">标记已发布</button><span class="v2-note" id="v2PublishState"></span></div><p class="v2-note">“已发布”只是保存打卡编号，不会替你发小红书。晨间日记全文不会自动进入正文。</p></div>';document.body.append(modal);
+function post(){const d=record();if(!d.post)d.post={summary:'',body:'',publishedNumber:null,publishedAt:''};return d.post}
+function postDay(){if(Number.isInteger(post().publishedNumber))return post().publishedNumber;const nums=Object.values(db).map(d=>d.post?.publishedNumber).filter(n=>Number.isInteger(n));return nums.length?Math.max(...nums)+1:0}
+function postTitle(){return '早起D'+postDay()+'🌞'+(record().wake||'--:--')+'｜'+($('v2Summary').value.trim()||'今天也记录真实的自己')}
+function postBody(){const d=record(),lines=[];d.tasks.forEach(t=>{const n=nonneg(t.actual);if(n!==null&&n>0)lines.push('· '+(t.tags.join(' + ')||t.content||'学习任务')+'：实际'+n+'分钟'+(t.content?'，'+t.content:''));else if(t.status==='done')lines.push('· '+(t.tags.join(' + ')||'学习任务')+'：已完成（未记录时长）')});if(d.journalDone)lines.push('· 晨间日记：已完成');if(d.vocabDone)lines.push('· 背单词：已完成');const feelings=d.tasks.filter(t=>t.feeling).map(t=>'· '+(t.tags.join(' + ')||'学习任务')+'：'+t.feeling);return '今天的朝活记录\n\n【实际学习】\n'+(lines.join('\n')||'尚未记录实际完成的学习任务。')+(feelings.length?'\n\n【学习感想】\n'+feelings.join('\n'):'')+(d.reflection?'\n\n【今日总结】\n'+d.reflection:'')+'\n\n#朝活记录 #日本生活 #学习记录'}
+function updatePost(){$('v2Title').textContent=postTitle();const p=post();$('v2PublishState').textContent=Number.isInteger(p.publishedNumber)?'已标记发布 D'+p.publishedNumber:'尚未发布';$('v2Published').disabled=Number.isInteger(p.publishedNumber)}
+$('v2Share').onclick=()=>{$('v2Summary').value=post().summary||'';$('v2Body').value=post().body||postBody();updatePost();modal.classList.add('active')};
+$('v2CloseShare').onclick=()=>modal.classList.remove('active');modal.onclick=e=>{if(e.target===modal)modal.classList.remove('active')};
+$('v2Summary').oninput=()=>{post().summary=$('v2Summary').value;persist();updatePost()};
+$('v2Body').oninput=()=>{post().body=$('v2Body').value;persist()};
+$('v2Generate').onclick=()=>{if(!confirm('重新生成正文会覆盖已编辑的分享正文，继续吗？'))return;$('v2Body').value=postBody();post().body=$('v2Body').value;persist()};
+function fallbackCopy(s){const t=document.createElement('textarea');t.value=s;document.body.append(t);t.select();document.execCommand('copy');t.remove();toast('已复制')}
+function copy(s){if(navigator.clipboard?.writeText)navigator.clipboard.writeText(s).then(()=>toast('已复制')).catch(()=>fallbackCopy(s));else fallbackCopy(s)}
+$('v2CopyTitle').onclick=()=>copy(postTitle());$('v2CopyBody').onclick=()=>copy($('v2Body').value);$('v2CopyAll').onclick=()=>copy(postTitle()+'\n\n'+$('v2Body').value);
+$('v2Published').onclick=()=>{const p=post();if(Number.isInteger(p.publishedNumber))return;if(!confirm('确认已经在小红书发布？这只记录打卡编号，不会自动发布。'))return;const n=postDay();p.publishedNumber=n;p.publishedAt=new Date().toISOString();p.summary=$('v2Summary').value;p.body=$('v2Body').value;persist();updatePost();toast('累计打卡 D'+n+' 已保存')};
+
+updateV2();goV2('today');
 
 })();
 
