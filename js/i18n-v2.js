@@ -76,14 +76,11 @@ const dictionary=[
 ['打开 ChatGPT（新标签页）','ChatGPT を開く（別タブ）']
 ];
 const byChinese=new Map(dictionary),byJapanese=new Map(dictionary.map(([zh,ja])=>[ja,zh]));
-const ignore='textarea,code,pre,script,style,[contenteditable="true"],[data-i18n-ignore],[data-user-content],.task-card h3,#v2Title,#v2DiaryHistory .meta,#v2OverviewTasks .record,#v2DailyList strong';
+const ignore='textarea,code,pre,script,style,.tag-choice,.task-tags,#mlSelect option,.category-stat strong,#history strong,[contenteditable="true"],[data-i18n-ignore],[data-user-content],.task-card h3,#v2Title,#v2DiaryHistory .meta,#v2OverviewTasks .record,#v2DailyList strong';
 const trimReplace=(original,newText)=>original.replace(/^(\s*)[\s\S]*?(\s*)$/,(_,start,end)=>start+newText+end);
 function translateWhole(text,isJa){
  const pair=(isJa?byChinese:byJapanese).get(text);
- if(pair!==undefined)return pair;
- const orig=(isJa?byJapanese:byChinese).get(text);
- if(orig!==undefined)return orig;
- return null;
+ return pair===undefined?null:pair;
 }
 function translatePatterns(text,isJa,parent){
  if(parent?.closest?.('.item-desc')){
