@@ -1,0 +1,44 @@
+name: V2 browser smoke tests
+on:
+  push:
+    branches: [v2-development]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'js/**'
+      - 'tests/**'
+      - '.github/workflows/v2-smoke.yml'
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser test dependencies
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Run browser smoke tests
+        run: node tests/smoke.cjs
+      - name: Verify branch preview CDN
+        continue-on-error: true
+        run: |
+          curl -L -sS --max-time 20 -o /tmp/v2-preview.html -w 'Preview status: %{http_code}, MIME: %{content_type}\\n' 'https://raw.githack.com/Simin1012/my-study-journal/v2-development/index.html'
+          grep -q '学习与成长记录' /tmp/v2-preview.html
+          curl -L -sS --max-time 20 -o /tmp/v2-enhancements.js -w 'Script status: %{http_code}, MIME: %{content_type}\\n' 'https://raw.githack.com/Simin1012/my-study-journal/v2-development/js/v2-enhancements.js'
+          grep -q 'setupOverview' /tmp/v2-enhancements.js
+          curl -L -sS --fail --max-time 20 -o /tmp/v2-i18n.js 'https://raw.githack.com/Simin1012/my-study-journal/v2-development/js/i18n-v2.js'
+          grep -q 'translatePatterns' /tmp/v2-i18n.js
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2-smoke-screenshots
+          path: tests/screenshots/
+          if-no-files-found: ignore
