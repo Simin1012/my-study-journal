@@ -73,7 +73,28 @@ const dictionary=[
 ['计划被打乱，也没关系','予定どおりでなくても大丈夫'],
 ['现在重新安排','予定の組み直し'],
 ['任务已完成','タスク完了'],['返回','戻る'],
-['打开 ChatGPT（新标签页）','ChatGPT を開く（別タブ）']
+['打开 ChatGPT（新标签页）','ChatGPT を開く（別タブ）'],
+["已自动保存到此浏览器","このブラウザに自動保存しました"],
+["保存失败，请导出备份","保存に失敗しました。バックアップをご確認ください"],
+["已添加学习任务","学習タスクを追加しました"],
+["名称不超过40字","名前は40文字以内にしてください"],
+["名称已存在","同じ名前がすでにあります"],
+["任务名称已添加","タスク名を追加しました"],
+["已保存","保存しました"],
+["摘要已复制","要約をコピーしました"],
+["导入成功","読み込みに成功しました"],
+["记录已删除","記録を削除しました"],
+["默认任务已保存","標準タスクを保存しました"],
+["默认时间已保存","標準時間を保存しました"],
+["已复制","コピーしました"],
+["导入将替换相同日期的记录，继续吗？","同じ日付の記録が上書きされます。続けますか？"],
+["重新生成正文会覆盖已编辑的分享正文，继续吗？","本文を再生成すると編集した下書きが上書きされます。続けますか？"],
+["确认已经在小红书发布？这只记录打卡编号，不会自动发布。","小紅書に投稿済みですか？番号を記録するだけで、自動投稿はしません。"],
+["请填写名称及有效分钟数","タスク名と正しい時間を入力してください"],
+["分钟数不正确","時間の入力値が正しくありません"],
+["本地记录读取失败，请使用备份文件恢复。","保存された記録を読み込めません。バックアップから復元してください。"],
+["任务名称","タスク名"],
+["今天学会了什么？有哪些疑问？下一次想改进什么？","今日の学び・疑問・次回改善したいことは？"]
 ];
 const byChinese=new Map(dictionary),byJapanese=new Map(dictionary.map(([zh,ja])=>[ja,zh]));
 const ignore='textarea,code,pre,script,style,.task-tags,#mlSelect option,.category-stat strong,#history strong,[contenteditable="true"],[data-i18n-ignore],[data-user-content],#v2Title,#v2DiaryHistory .meta,#v2OverviewTasks .record,#v2DailyList strong';
@@ -147,7 +168,22 @@ function apply(){
 }
 let queued=false;
 const observer=new MutationObserver(()=>{if(queued||busy)return;queued=true;queueMicrotask(()=>{queued=false;apply()})});
-window.MomoI18n=Object.freeze({apply,translate:s=>translateWhole(s,localStorage.getItem(KEY)==='ja')||s});
+function translateMessage(s){
+ const ja=localStorage.getItem(KEY)==='ja';
+ const v=translateWhole(String(s),ja);if(v!==null)return v;
+ if(!ja)return String(s);
+ const text=String(s);
+ let m=text.match(/^确定删除学习任务(\d+)？$/);
+ if(m)return '学習タスク'+m[1]+'を削除しますか？';
+ m=text.match(/^从选择列表移除「(.+)」？历史记录仍会保留名称。$/);
+ if(m)return '「'+m[1]+'」を選択肢から削除しますか？履歴には残ります。';
+ m=text.match(/^删除 (\d{4}-\d{2}-\d{2}) 的记录？此操作不可撤销。$/);
+ if(m)return m[1]+' の記録を削除しますか？元に戻せません。';
+ m=text.match(/^累计打卡 D(\d+) 已保存$/);
+ if(m)return '累計記録 D'+m[1]+' を保存しました';
+ return text;
+}
+window.MomoI18n=Object.freeze({apply,translate:translateMessage});
 document.getElementById('v2Language')?.addEventListener('change',()=>queueMicrotask(apply));
 apply();
 })();
