@@ -20,6 +20,13 @@ function listen(){return new Promise(resolve=>server.listen(0,'127.0.0.1',()=>re
     page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});
     await page.goto('http://127.0.0.1:'+port+'/index.html',{waitUntil:'networkidle'});
     assert.equal(await page.title(),'学习与成长记录');
+    assert.equal(await page.locator('#replanNowBtn').count(),0,'replanning controls removed');
+    assert.equal((await page.locator('label[for="arrive"]').textContent()).trim(),'自习点到达时间');
+    await page.locator('#journalActual').fill('12');
+    await page.locator('#vocabActual').fill('0');
+    await page.reload({waitUntil:'networkidle'});
+    assert.equal(await page.locator('#journalActual').inputValue(),'12');
+    assert.equal(await page.locator('#vocabActual').inputValue(),'0');
     assert.equal(await page.locator('.v2-nav button').count(),5);
     for(const dest of ['plan','journal','stats','today']){
       await page.locator('.v2-nav button[data-page="'+dest+'"]').click();
@@ -27,10 +34,13 @@ function listen(){return new Promise(resolve=>server.listen(0,'127.0.0.1',()=>re
     }
     await page.locator('.v2-nav button[data-page="mainline"]').click();
     assert.ok(await page.locator('#mlAdd').isVisible(),'mainline add visible');
+    assert.ok(await page.locator('#mlAiCreate').isVisible(),'AI planning guidance visible before creating mainline');
     const prompts=['Java复习','掌握Section17'];
     page.on('dialog',async dlg=>{if(dlg.type()==='prompt')await dlg.accept(prompts.shift()||'');else await dlg.accept()});
     await page.locator('#mlAdd').click();
     assert.equal(await page.locator('#mlSelect option').count(),1);
+    assert.ok(await page.locator('#mlAiCard').isVisible(),'AI plan assistant visible at top');
+    assert.ok(await page.locator('#mlImport').isVisible(),'AI JSON input is not hidden in details');
     await page.locator('#mlProgress').fill('Section 11 Lesson 65');
     await page.locator('#mlSave').click();
     await page.locator('#mlTaskName').fill('Java メソッド练习');
@@ -53,6 +63,16 @@ function listen(){return new Promise(resolve=>server.listen(0,'127.0.0.1',()=>re
     assert.match(await page.locator('[data-note] [data-notes]').inputValue(),/了解方法/);
     await page.locator('#v2Language').selectOption('ja');
     assert.equal(await page.title(),'学習・成長記録');
+    await page.locator('.v2-nav button[data-page="today"]').click();
+    await page.waitForFunction(()=>document.querySelector('label[for="arrive"]').textContent.trim()==='学習場所への到着時刻');
+    assert.equal((await page.locator('label[for="arrive"]').textContent()).trim(),'学習場所への到着時刻');
+    assert.equal((await page.locator('label[for="journalActual"]').textContent()).trim(),'朝の日記・実績（分）');
+    await page.locator('.v2-nav button[data-page="plan"]').click();
+    await page.waitForFunction(()=>[...document.querySelectorAll('#v2-plan h2')].some(x=>x.textContent==='標準時間'));
+    assert.ok(await page.locator('#v2-plan h2').allTextContents().then(a=>a.includes('標準時間')));
+    await page.locator('.v2-nav button[data-page="mainline"]').click();
+    assert.equal(await page.locator('#mlSelect option').first().textContent(),'Java复习','user-entered project name is unchanged');
+    console.log('JAPANESE_UI_SAMPLE:',JSON.stringify(await page.locator('h1,h2,h3,label,.v2-tabbar button,.v2-note').allTextContents().then(a=>a.filter(x=>/[计划实际新增星巴克默认完整学习任务选择]/.test(x)).slice(0,20))));
     await page.reload({waitUntil:'networkidle'});
     assert.equal(await page.locator('#v2Language').inputValue(),'ja');
     assert.ok(await page.locator('#v2GlobalDate').isVisible(),'global date visible');
@@ -105,7 +125,7 @@ function listen(){return new Promise(resolve=>server.listen(0,'127.0.0.1',()=>re
     await mobile.locator('.v2-nav button[data-page="mainline"]').click();
     assert.ok(await mobile.locator('#mlAdd').isVisible());
     assert.equal(errors.length,0,'Browser errors: '+errors.join(' | '));
-    console.log('PASS: 5 tabs, mainline CRUD, notes/code, reload, bilingual, AI JSON import, date switching, sharing, backup/restore, mobile');
+    console.log('PASS: revised location, simple planned/actual, 5 tabs, bilingual, AI planning visibility+import, date switching, sharing, backup/restore, mobile');
   }catch(e){console.error('FAIL: '+e.stack);if(page){fs.mkdirSync(path.join(__dirname,'screenshots'),{recursive:true});await page.screenshot({path:path.join(__dirname,'screenshots','failure.png'),fullPage:true}).catch(()=>{})}process.exitCode=1}
   finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve))}
 })();
