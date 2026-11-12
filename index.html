@@ -36,7 +36,7 @@
 <div class="field-grid"><div class="field"><label for="wake">起床时间</label><input class="input" type="time" id="wake"></div><div class="field"><label for="leave">出门时间</label><input class="input" type="time" id="leave"></div><div class="field"><label for="arrive">自习点到达时间</label><input class="input" type="time" id="arrive"></div></div>
 <p class="hint">按到达时间自动计算晨间日记15分钟、背单词10分钟，随后安排学习任务。计划时间不等于实际完成时间。</p><hr class="section-sep"><ol class="timeline" id="timeline"></ol>
 <div class="field" style="margin-top:18px"><label for="morningJournal">晨间日记 · 今日记录</label><textarea id="morningJournal" rows="5" maxlength="20000" placeholder="今天的状态：&#10;今天最重要的一件事：&#10;此刻的想法或感受："></textarea><p class="hint" style="margin:0">按当前选择的日期自动保存；切换到历史日期即可查看或修改当天日记。填写文字不会自动勾选“日记已完成”。</p></div>
-<div class="mini-row" style="margin-top:12px"><label class="checkbox"><input type="checkbox" id="journalDone">日记已完成</label><label class="checkbox"><input type="checkbox" id="vocabDone">背单词已完成</label></div></div>
+<div class="mini-row" style="margin-top:12px"><label class="checkbox"><input type="checkbox" id="journalDone">日记已完成</label><label class="checkbox"><input type="checkbox" id="vocabDone">背单词已完成</label></div><div class="field-grid" style="margin-top:12px"><div class="field"><label for="journalActual">晨间日记 · 实际分钟</label><input class="input" id="journalActual" type="number" min="0" max="1440" placeholder="未记录"></div><div class="field"><label for="vocabActual">背单词 · 实际分钟</label><input class="input" id="vocabActual" type="number" min="0" max="1440" placeholder="未记录"></div></div><p class="hint">原定时间按到达时间推算；实际分钟请手动填写。留空表示未记录，0 表示实际为零。</p></div>
 <div class="card"><div class="task-head"><div><h2>学习任务</h2><p class="hint">随时添加或删除任务，组合任务名称，记录实际时间和感想。</p></div><button type="button" class="btn primary" id="addTask">＋ 添加任务</button></div>
 <div id="taskList" class="task-list"></div>
 <hr class="section-sep"><div class="field"><label for="reflection">今日整体复盘</label><textarea id="reflection" placeholder="今天学会了什么？有哪些疑问？下一次想改进什么？"></textarea></div>
@@ -72,10 +72,10 @@ const str=s=>typeof s==='string'?s:'';
 const nonneg=s=>{if(s===''||s===null||s===undefined)return null;const x=Number(s);return Number.isFinite(x)&&x>=0&&x<=1440?x:null};
 const readTags=x=>{try{const v=Array.isArray(x)?x:JSON.parse(x||'[]');return Array.isArray(v)?[...new Set(v.filter(k=>typeof k==='string'&&k.trim()).map(x=>x.slice(0,40)))]:[]}catch(e){return []}};
 const defaultTask=()=>({id:uid(),tags:[],content:'',goal:'',planned:'90',actual:'',start:'',status:'planned',feeling:'',adjustedStart:'',adjustedMinutes:'',carryMinutes:''});
-const empty=()=>({wake:'',leave:'',arrive:'',journalDone:false,vocabDone:false,morningJournal:'',reflection:'',tasks:[defaultTask()],morningPlan:{},replanHistory:[]});
+const empty=()=>({wake:'',leave:'',arrive:'',journalDone:false,vocabDone:false,journalActual:'',vocabActual:'',morningJournal:'',reflection:'',tasks:[defaultTask()],morningPlan:{},replanHistory:[]});
 const normalizeTask=t=>{const p=defaultTask();return {...p,id:str(t?.id)||p.id,tags:readTags(t?.tags),content:str(t?.content),goal:str(t?.goal),planned:String(t?.planned??'90'),actual:String(t?.actual??''),start:str(t?.start),status:['planned','progress','done','postponed'].includes(t?.status)?t.status:'planned',feeling:str(t?.feeling),adjustedStart:str(t?.adjustedStart),adjustedMinutes:str(t?.adjustedMinutes),carryMinutes:str(t?.carryMinutes)}};
 const normalize=d=>{
- const v={...empty(),wake:str(d?.wake),leave:str(d?.leave),arrive:str(d?.arrive),journalDone:d?.journalDone===true,vocabDone:d?.vocabDone===true,morningJournal:str(d?.morningJournal),reflection:str(d?.reflection),post:d?.post&&typeof d.post==='object'?d.post:{summary:'',body:'',publishedNumber:null,publishedAt:''},morningPlan:d?.morningPlan&&typeof d.morningPlan==='object'?d.morningPlan:{},replanHistory:Array.isArray(d?.replanHistory)?d.replanHistory.slice(-50):[]};
+ const v={...empty(),wake:str(d?.wake),leave:str(d?.leave),arrive:str(d?.arrive),journalDone:d?.journalDone===true,vocabDone:d?.vocabDone===true,journalActual:nonneg(d?.journalActual)===null?'':String(d.journalActual),vocabActual:nonneg(d?.vocabActual)===null?'':String(d.vocabActual),morningJournal:str(d?.morningJournal),reflection:str(d?.reflection),post:d?.post&&typeof d.post==='object'?d.post:{summary:'',body:'',publishedNumber:null,publishedAt:''},morningPlan:d?.morningPlan&&typeof d.morningPlan==='object'?d.morningPlan:{},replanHistory:Array.isArray(d?.replanHistory)?d.replanHistory.slice(-50):[]};
  if(Array.isArray(d?.tasks)){v.tasks=d.tasks.map(normalizeTask);return v}
  const old1=str(d?.study1),old2=str(d?.study2),o1tags=readTags(d?.taskTags1),o2tags=readTags(d?.taskTags2);
  v.tasks=[normalizeTask({content:old1,tags:o1tags,goal:d?.outcome1,planned:'90',start:'',status:d?.status1,actual:'',feeling:''})];
@@ -124,17 +124,17 @@ const renderTasks=()=>{$('taskList').innerHTML=record().tasks.length?record().ta
 const renderTimeline=()=>{
  const arrival=min(record().arrive),j=nonneg(plan.journal)??15,v=nonneg(plan.vocab)??10;
  const rows=[['晨间日记',j,arrival,record().journalDone,record().journalActual],['背单词',v,arrival===null?null:arrival+j,record().vocabDone,record().vocabActual]];
- $('timeline').innerHTML=rows.map(([name,planned,start,done,actual])=>'<li class="item"><span class="time">'+range(start,planned)+'</span><span class="track"><span class="dot"></span><span class="stem"></span></span><span><span class="item-name">'+name+'</span><br><span class="item-desc">原定 '+planned+'分钟 · '+(done?'已完成':'未完成')+' · 实际 '+(actual===''?'未记录':actual+'分钟')+'</span></span></li>').join('');
+ $('timeline').innerHTML=rows.map(([name,planned,start,done,actual])=>'<li class="item"><span class="time">'+range(start,planned)+'</span><span class="track"><span class="dot"></span><span class="stem"></span></span><span><span class="item-name">'+name+'</span><br><span class="item-desc">原定 '+planned+'分钟 · '+(done?'已完成':'未完成')+' · 实际 '+(actual===''||actual===undefined?'未记录':actual+'分钟')+'</span></span></li>').join('');
  updateTaskPreviews();
 };
 const renderNames=()=>{
  const custom=categories.filter(t=>!DEFAULT_TAGS.includes(t));
  $('customTags').innerHTML=custom.length?custom.map(t=>'<span class="tag-choice" style="display:inline-flex;gap:5px;align-items:center">'+esc(t)+' <button type="button" class="tag-remove" data-remove-tag="'+encodeURIComponent(t)+'">×</button></span>').join(''):'<p class="hint">暂无自定义名称</p>';
 };
-const show=()=>{active=normalize(db[current]||{tasks:plan.tasks.map(t=>({id:uid(),tags:[t.name],content:'',planned:t.minutes,status:'planned'}))});$('date').value=current;for(const field of ['wake','leave','arrive','morningJournal','reflection'])$(field).value=active[field];for(const field of ['journalDone','vocabDone'])$(field).checked=active[field];renderTasks();renderNames();renderTimeline();updateStats();updateHistory()};
-const actualMinutes=d=>(d.tasks||[]).reduce((a,t)=>a+(nonneg(t.actual)??0),0);
+const show=()=>{active=normalize(db[current]||{tasks:plan.tasks.map(t=>({id:uid(),tags:[t.name],content:'',planned:t.minutes,status:'planned'}))});$('date').value=current;for(const field of ['wake','leave','arrive','morningJournal','reflection','journalActual','vocabActual'])$(field).value=active[field];for(const field of ['journalDone','vocabDone'])$(field).checked=active[field];renderTasks();renderNames();renderTimeline();updateStats();updateHistory()};
+const actualMinutes=d=>(d.tasks||[]).reduce((a,t)=>a+(nonneg(t.actual)??0),0)+(nonneg(d.journalActual)??0)+(nonneg(d.vocabActual)??0);
 const updateStats=()=>{
- const keys=Object.keys(db).filter(k=>k<=today()).sort(),known=keys.filter(k=>{const d=db[k];return !!(d.wake||d.leave||d.arrive||d.morningJournal||d.reflection||d.journalDone||d.vocabDone||d.tasks?.some(t=>t.content||t.actual||t.goal||t.feeling))});
+ const keys=Object.keys(db).filter(k=>k<=today()).sort(),known=keys.filter(k=>{const d=db[k];return !!(d.wake||d.leave||d.arrive||d.morningJournal||d.reflection||d.journalDone||d.vocabDone||d.journalActual!==''||d.vocabActual!==''||d.tasks?.some(t=>t.content||t.actual||t.goal||t.feeling))});
  $('days').textContent=known.length;
  $('minutes').textContent=keys.reduce((n,k)=>n+actualMinutes(db[k]),0);
  let cursor=known.includes(today())?today():moveDate(today(),-1),streak=0;
@@ -160,7 +160,7 @@ const toast=s=>{const e=$('toast');e.textContent=s;e.classList.add('show');setTi
 const download=(filename,content,type)=>{const url=URL.createObjectURL(new Blob([content],{type}));const link=document.createElement('a');link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 const summary=()=>{
  const d=record(),a=min(d.arrive);
- let out='【朝活记录｜'+current+'】\n起床：'+(d.wake||'未填')+'\n出门：'+(d.leave||'未填')+'\n到达自习点：'+(d.arrive||'未填')+'\n晨间日记：'+range(a,15)+' '+(d.journalDone?'已完成':'未确认')+'\n背单词：'+range(a===null?null:a+15,10)+' '+(d.vocabDone?'已完成':'未确认');
+ let out='【朝活记录｜'+current+'】\n起床：'+(d.wake||'未填')+'\n出门：'+(d.leave||'未填')+'\n到达自习点：'+(d.arrive||'未填')+'\n晨间日记：原定'+range(a,15)+' / 实际'+(d.journalActual===''?'未记录':d.journalActual+'分钟')+' '+(d.journalDone?'已完成':'未确认')+'\n背单词：原定'+range(a===null?null:a+15,10)+' / 实际'+(d.vocabActual===''?'未记录':d.vocabActual+'分钟')+' '+(d.vocabDone?'已完成':'未确认');
  d.tasks.forEach((t,i)=>{out+='\n\n【学习任务'+(i+1)+'】\n名称：'+(t.tags.join(' + ')||'未分类')+'\n内容：'+(t.content||'未填')+'\n时间：'+taskTime(t)+'\n计划：'+(t.planned||'未填')+'分钟；实际：'+(t.actual||'未填')+'分钟\n状态：'+({planned:'计划中',progress:'进行中',done:'已完成'}[t.status])+'\n成果：'+(t.goal||'未填')+'\n感想：'+(t.feeling||'未填')});
  return out+'\n\n晨间日记：'+(d.morningJournal||'未填写')+'\n今日复盘：'+(d.reflection||'未填写');
 };
@@ -179,7 +179,8 @@ $('taskList').addEventListener('click',e=>{
 });
 $('addTask').onclick=()=>{const d=record();const t=defaultTask();t.planned='30';d.tasks.push(t);renderTasks();persist();toast('已添加学习任务')};
 for(const field of ['wake','leave','arrive','morningJournal','reflection'])$(field).addEventListener('input',()=>{record()[field]=$(field).value;persist();if(field==='arrive')renderTimeline()});
-for(const field of ['journalDone','vocabDone'])$(field).addEventListener('change',()=>{record()[field]=$(field).checked;persist()});
+for(const field of ['journalDone','vocabDone'])$(field).addEventListener('change',()=>{record()[field]=$(field).checked;persist();renderTimeline()});
+for(const field of ['journalActual','vocabActual'])$(field).addEventListener('input',()=>{const value=$(field).value;if(value!==''&&nonneg(value)===null){$(field).setCustomValidity('请输入0至1440分钟');$(field).reportValidity();return}$(field).setCustomValidity('');record()[field]=value;persist();renderTimeline()});
 $('date').addEventListener('change',()=>{current=$('date').value||today();show()});
 $('addTag').onclick=()=>{const x=$('newTag').value.trim();if(!x)return;if(x.length>40){toast('名称不超过40字');return}if(categories.includes(x)){toast('名称已存在');return}categories.push(x);localStorage.setItem(TAG_KEY,JSON.stringify(categories));$('newTag').value='';renderNames();renderTasks();toast('任务名称已添加')};
 $('newTag').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('addTag').click()}});
