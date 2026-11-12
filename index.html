@@ -303,7 +303,7 @@ function postBody(){
  const asMinutes=v=>{const n=nonneg(v);return n===null?'':(n>=60&&n%60===0?(n/60)+'小时':n+'分钟')};
  const description=(name,planned,actual,status)=>{
   const p=asMinutes(planned),a=asMinutes(actual);
-  if(a)return '· '+name+'：'+(p?'原定'+p+'，':'')+'实际学习'+a+(status==='done'?'（已完成）':status==='postponed'?'（剩余已延期）':'');
+  if(actual!==''&&actual!==null&&actual!==undefined&&Number.isFinite(Number(actual))&&Number(actual)>=0)return '· '+name+'：'+(p?'原定'+p+'，':'')+'实际学习'+a+(status==='done'?'（已完成）':status==='postponed'?'（剩余已延期）':'');
   if(status==='done')return '· '+name+'：已完成'+(p?'（原定'+p+'，实际时间未记录）':'（实际时间未记录）');
   const states={planned:'计划中',progress:'进行中',postponed:'已延期'};
   return '· '+name+'：'+(p?'原定'+p+'，':'')+(states[status]||'未标记完成')+'，实际时间未记录';
