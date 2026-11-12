@@ -3,6 +3,7 @@
 const S=window.MomoV2Storage,B=window.MomoLegacyBridge;
 if(!S||!B)return;
 const $=id=>document.getElementById(id);
+const toolbarStyle=document.createElement('style');toolbarStyle.textContent="\n.v2-toolbar{position:sticky;top:0;z-index:12;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;max-width:1150px;margin:0 auto 16px;padding:11px 16px;background:rgba(255,255,255,.97);border:1px solid #e2e9f3;border-radius:14px;box-shadow:0 3px 12px #23324c10}\n.v2-toolbar-date,.v2-lang{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:650}.v2-toolbar-date .input,.v2-lang .input{min-width:125px;max-width:180px}.v2-toolbar button{white-space:nowrap}\n@media(max-width:480px){.v2-toolbar{padding:9px;gap:7px}.v2-toolbar-date .input{min-width:135px;max-width:155px}.v2-toolbar button{font-size:11px;padding:9px 8px}.v2-lang span{display:none}.v2-lang .input{min-width:82px}}\n";document.head.append(toolbarStyle);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[c]));
 const lang=()=>localStorage.getItem(S.LANG_KEY)==='ja'?'ja':'zh';
 const t=(zh,ja)=>lang()==='ja'?ja:zh;
@@ -58,13 +59,23 @@ function setupBackup(){
  imp.onclick=()=>input.click();
  input.onchange=async()=>{const file=input.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!S.validateBackup(data))throw Error('Invalid backup format');const count=Object.keys(data.legacy['momo-study-journal-v1']?.records||data.legacy['momo-study-journal-v1']||{}).length;if(!confirm(t('将恢复完整备份，可能覆盖当前记录。备份包含约','バックアップを復元します。記録数：')+count+t('条旧记录。请先导出当前完整备份。','。現在のデータを先に保存してください。')))return;const keys=['momo-study-journal-v1','momo-study-task-names-v1','momo-study-default-plan-v2'];const snapshot=Object.fromEntries([...keys,S.KEY,S.LANG_KEY].map(k=>[k,localStorage.getItem(k)]));try{keys.forEach(k=>{if(data.legacy[k]!==null&&data.legacy[k]!==undefined)localStorage.setItem(k,JSON.stringify(data.legacy[k]))});S.write(data.mainline);localStorage.setItem(S.LANG_KEY,data.language==='ja'?'ja':'zh');alert(t('恢复完成，页面将重新载入。','復元しました。再読み込みします。'));location.reload()}catch(e){Object.entries(snapshot).forEach(([k,v])=>v===null?localStorage.removeItem(k):localStorage.setItem(k,v));throw e}}catch(e){alert(t('恢复失败：','復元失敗：')+e.message)}finally{input.value=''}};
 }
+function setupToolbar(){
+ const header=document.querySelector('.top'),bar=document.createElement('div');
+ bar.className='v2-toolbar';bar.id='v2Toolbar';
+ bar.innerHTML='<label class="v2-toolbar-date"><span id="v2DateCaption">记录日期</span><input type="date" class="input" id="v2GlobalDate" aria-label="记录日期"></label><button type="button" class="btn" id="v2GoBackup">备份与恢复</button>';
+ header.insertAdjacentElement('afterend',bar);
+ $('v2GlobalDate').value=date();
+ $('v2GlobalDate').addEventListener('change',()=>{if(!$('v2GlobalDate').value)return;$('date').value=$('v2GlobalDate').value;$('date').dispatchEvent(new Event('change',{bubbles:true}));});
+ $('date').addEventListener('change',()=>{$('v2GlobalDate').value=date()});
+ $('v2GoBackup').onclick=()=>{B.goV2('stats');applyLanguage()};
+}
 function setupLanguage(){
- const header=document.querySelector('.top-right'),wrap=document.createElement('label');wrap.className='v2-lang';wrap.innerHTML='<span>Language</span><select class="input" id="v2Language"><option value="zh">中文</option><option value="ja">日本語</option></select>';header.prepend(wrap);$('v2Language').value=lang();
+ const header=$('v2Toolbar'),wrap=document.createElement('label');wrap.className='v2-lang';wrap.innerHTML='<span>Language</span><select class="input" id="v2Language"><option value="zh">中文</option><option value="ja">日本語</option></select>';header.prepend(wrap);$('v2Language').value=lang();
  $('v2Language').onchange=e=>{localStorage.setItem(S.LANG_KEY,e.target.value);applyLanguage();render()};
  applyLanguage();
 }
 const labels={
- '今日朝活':['今日朝活','今日の朝活'],'起床时间':['起床时间','起床時刻'],'出门时间':['出门时间','出発時刻'],'星巴克到达':['星巴克到达','スターバックス到着'],'日记已完成':['日记已完成','日記完了'],'背单词已完成':['背单词已完成','単語学習完了'],'保存今日记录':['保存今日记录','今日の記録を保存'],'复制今日摘要':['复制今日摘要','今日の要約をコピー'],'添加任务':['添加任务','タスクを追加'],'今日整体复盘':['今日整体复盘','今日の振り返り'],'任务名称管理':['任务名称管理','タスク名の管理'],'实际学习分钟':['实际学习分钟','実際の学習時間（分）'],'有记录天数':['有记录天数','記録した日数'],'连续记录天数':['连续记录天数','連続記録日数'],'最近7天记录':['最近7天记录','直近7日間の記録'],'按任务名称统计':['按任务名称统计','タスク別統計'],'导出 CSV':['导出 CSV','CSV出力'],'重新开始时间':['重新开始时间','再開時刻'],'最晚结束时间':['最晚结束时间','終了期限'],'现在重新安排':['现在重新安排','予定を組み直す'],'确认调整':['确认调整','変更を確定'],'预览新安排':['预览新安排','新しい予定を確認'],'读取当前时间':['读取当前时间','現在時刻を取得'],'晨间日记 · 今日记录':['晨间日记 · 今日记录','朝の日記・今日の記録'],'今天的一句话总结':['今天的一句话总结','今日のひとこと'],'小红书 · 今日分享':['小红书 · 今日分享','小紅書・今日のシェア'],'关闭':['关闭','閉じる'],'复制正文':['复制正文','本文をコピー'],'复制标题':['复制标题','タイトルをコピー'],'全部复制':['全部复制','すべてコピー'],'从实际记录生成正文':['从实际记录生成正文','記録から本文を生成'],'确认发布':['确认发布','投稿済みを記録'],
+ '记录日期':['记录日期','記録日'],'备份与恢复':['备份与恢复','バックアップ・復元'],'今日朝活':['今日朝活','今日の朝活'],'起床时间':['起床时间','起床時刻'],'出门时间':['出门时间','出発時刻'],'星巴克到达':['星巴克到达','スターバックス到着'],'日记已完成':['日记已完成','日記完了'],'背单词已完成':['背单词已完成','単語学習完了'],'保存今日记录':['保存今日记录','今日の記録を保存'],'复制今日摘要':['复制今日摘要','今日の要約をコピー'],'添加任务':['添加任务','タスクを追加'],'今日整体复盘':['今日整体复盘','今日の振り返り'],'任务名称管理':['任务名称管理','タスク名の管理'],'实际学习分钟':['实际学习分钟','実際の学習時間（分）'],'有记录天数':['有记录天数','記録した日数'],'连续记录天数':['连续记录天数','連続記録日数'],'最近7天记录':['最近7天记录','直近7日間の記録'],'按任务名称统计':['按任务名称统计','タスク別統計'],'导出 CSV':['导出 CSV','CSV出力'],'重新开始时间':['重新开始时间','再開時刻'],'最晚结束时间':['最晚结束时间','終了期限'],'现在重新安排':['现在重新安排','予定を組み直す'],'确认调整':['确认调整','変更を確定'],'预览新安排':['预览新安排','新しい予定を確認'],'读取当前时间':['读取当前时间','現在時刻を取得'],'晨间日记 · 今日记录':['晨间日记 · 今日记录','朝の日記・今日の記録'],'今天的一句话总结':['今天的一句话总结','今日のひとこと'],'小红书 · 今日分享':['小红书 · 今日分享','小紅書・今日のシェア'],'关闭':['关闭','閉じる'],'复制正文':['复制正文','本文をコピー'],'复制标题':['复制标题','タイトルをコピー'],'全部复制':['全部复制','すべてコピー'],'从实际记录生成正文':['从实际记录生成正文','記録から本文を生成'],'确认发布':['确认发布','投稿済みを記録'],
  '今日':['今日','今日'],'计划':['计划','計画'],'主线':['主线','メイン'],'日记':['日记','日記'],'统计':['统计','統計'],
  '学习与成长记录':['学习与成长记录','学習・成長記録'],'计划设置':['计划设置','計画設定'],'主线任务':['主线任务','メインタスク'],'学习统计':['学习统计','学習統計'],
  '备份数据':['备份数据','バックアップ'],'导入备份':['导入备份','復元'],'分享今日记录 · 小红书':['分享今日记录 · 小红书','今日の記録をシェア'],
@@ -75,7 +86,7 @@ function applyLanguage(){
  const ja=lang()==='ja';document.documentElement.lang=ja?'ja':'zh-CN';
  document.title=t('学习与成长记录','学習・成長記録');
  document.querySelectorAll('.v2-nav button').forEach(b=>{const span=b.querySelector('span');const key=b.dataset.page;const names={today:['今日','今日'],plan:['计划','計画'],mainline:['主线','メイン'],journal:['日记','日記'],stats:['统计','統計']};if(span&&names[key]){const tail=[...b.childNodes].find(n=>n.nodeType===3);if(tail)tail.textContent=names[key][ja?1:0]}});
- document.querySelectorAll('h1,h2,h3,.v2-tabbar button,.v2-modal button,.v2-modal label,.v2-extra label,.card label,.stat-label,.card-head button,#v2Share,#exportJson,#importBtn,#saveBtn,#copyBtn').forEach(el=>{if(el.children.length)return;const txt=el.textContent.trim(),entry=labels[txt]||Object.values(labels).find(v=>v.includes(txt));if(entry)el.textContent=entry[ja?1:0]});
+ document.querySelectorAll('h1,h2,h3,#v2DateCaption,#v2GoBackup,.v2-tabbar button,.v2-modal button,.v2-modal label,.v2-extra label,.card label,.stat-label,.card-head button,#v2Share,#exportJson,#importBtn,#saveBtn,#copyBtn').forEach(el=>{if(el.children.length)return;const txt=el.textContent.trim(),entry=labels[txt]||Object.values(labels).find(v=>v.includes(txt));if(entry)el.textContent=entry[ja?1:0]});
  const title=document.querySelector('h1.title');if(title)title.textContent=t('学习与成长记录','学習・成長記録');
 }
 function setupJournal(){
@@ -100,5 +111,5 @@ function setupPlanAndStats(){
  const refresh=()=>{const d=get(),tasks=d.daily[date()]||[];if($('v2LinkedPlan'))$('v2LinkedPlan').innerHTML=tasks.length?tasks.map(x=>'<div class="record">'+esc(x.title)+' · '+(x.plannedMinutes??'—')+t('分钟','分')+' · '+(x.actualMinutes===null?t('实际未记录','実績未記録'):x.actualMinutes+t('分钟','分'))+'</div>').join(''):'<p class="hint">'+t('暂无主线计划','予定なし')+'</p>';if($('v2LinkedStats')){const all=Object.values(d.daily).flat().filter(x=>x&&typeof x==='object');const total=all.reduce((n,x)=>n+(typeof x.actualMinutes==='number'?x.actualMinutes:0),0);const known=all.filter(x=>typeof x.actualMinutes==='number').length;const done=all.filter(x=>x.status==='done').length;$('v2LinkedStats').textContent=t('累计有记录的主线学习：','記録済みの学習時間：')+total+t('分钟；有实际时间的任务 ','分、実績記録タスク ')+known+t('项；已完成 ','件、完了 ')+done+t('项','件')}};
  document.querySelector('.v2-nav').addEventListener('click',()=>setTimeout(refresh,0));$('date').addEventListener('change',()=>setTimeout(refresh,0));window.MomoV2RefreshAll=refresh;refresh();
 }
-setupBackup();setupLanguage();setupJournal();setupOverview();setupPlanAndStats();render();
+setupBackup();setupToolbar();setupLanguage();setupJournal();setupOverview();setupPlanAndStats();render();
 })();
