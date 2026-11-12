@@ -52,10 +52,34 @@ function render(){
  $('mlArchive').onclick=()=>{const d=get(),x=project(d);x.status=x.status==='paused'?'active':'paused';if(safeSave(d))render()};
  $('mlTaskAdd').onclick=()=>{const title=$('mlTaskName').value.trim(),raw=$('mlTaskMinutes').value,n=raw===''?null:Number(raw);if(!title||n!==null&&(!Number.isFinite(n)||n<0||n>1440)){alert(t('请填写有效任务名称和分钟数','タスク名と時間を確認してください'));return}S.addDailyTask(date(),selected,{title,plannedMinutes:n,start:$('mlTaskStart').value});render()};
  renderTasks();renderNotes();
+ $('mlFromChat').onclick=()=>{
+   const x=project(get());
+   copy('请把我们在【当前这个对话】中已经讨论确定的 '+date()+' 学习计划，转换成我学习记录网站可直接导入的任务清单。学习主线是「'+x.name+'」，目前学习进度「'+(x.progress||'未填写')+'」。请直接根据本对话里我发过的 Udemy 进度截图和你之前给我的学习安排整理，不要让我重新发截图，不要重新制定新计划，也不要编造未确认的学习时长。请只输出一个严格有效的 JSON 对象：{"tasks":[{"title":"任务名称","plannedMinutes":60,"start":"12:00"}]}。plannedMinutes 如果原计划没给出明确分钟数就填 null；start 不知道就填空字符串；只写今天要做的任务，保持原先的先后顺序，不要把长期目标写成单日任务。不用添加代码围栏、解释或其他文字。');
+ };
  $('mlPrompt').onclick=()=>{const d=get(),x=project(d);copy('请帮我整理学习与成长记录V2的主线任务计划，先讨论合理性，再输出可导入的JSON格式：{"tasks":[{"title":"任务名称","plannedMinutes":60}]}，只输出有效 JSON 时不要添加 Markdown 代码围栏。主线：'+x.name+'；长期目标：'+x.goal+'；当前进度：'+(x.progress||'未记录')+'；今日可用时间：'+($('mlAiHours').value||'未填写')+'分钟；优先事项：'+($('mlAiFocus').value||'未填写')+'。请区分最低、主要和挑战目标，保留独立代码练习与复习时间。')};
  $('mlReview').onclick=()=>{const d=get(),tasks=(d.daily[date()]||[]).filter(x=>x.mainlineId===selected);copy('请根据以下学习记录进行日中双语通勤复习，一次只问一题，等我回答后再纠正。日期：'+date()+'。主线：'+p.name+'\n'+tasks.map(x=>JSON.stringify(x)).join('\n'))};
- $('mlPreview').onclick=()=>{draftImport=null;$('mlApply').disabled=true;try{const obj=JSON.parse($('mlImport').value);if(!obj||!Array.isArray(obj.tasks)||obj.tasks.length===0||obj.tasks.length>50)throw Error('tasks must contain 1-50 items');const tasks=obj.tasks.map(x=>{if(!x||typeof x.title!=='string'||!x.title.trim()||x.title.length>200||!Number.isFinite(x.plannedMinutes)||x.plannedMinutes<0||x.plannedMinutes>1440)throw Error('Invalid title/minutes');return {title:x.title.trim(),plannedMinutes:x.plannedMinutes}});draftImport=tasks;$('mlImportPreview').textContent=tasks.map(x=>x.title+' · '+x.plannedMinutes+'分').join('\n');$('mlImportPreview').style.whiteSpace='pre-line';$('mlApply').disabled=false}catch(e){$('mlImportPreview').textContent=t('格式不正确：','形式が正しくありません：')+e.message}};
- $('mlApply').onclick=()=>{if(!draftImport)return;if(!confirm(t('确认将'+draftImport.length+'项任务加入今天？','今日のタスクに追加しますか？')))return;const d=get();const arr=d.daily[date()]||[];const now=Date.now();draftImport.forEach((x,i)=>arr.push({id:'import-'+now+'-'+i,mainlineId:selected,title:x.title,plannedMinutes:x.plannedMinutes,actualMinutes:null,status:'planned',notes:'',codeSnippets:[]}));d.daily[date()]=arr;if(safeSave(d)){draftImport=null;render()}};
+ $('mlPreview').onclick=()=>{
+  draftImport=null;$('mlApply').disabled=true;
+  try{
+   const raw=$('mlImport').value.trim();
+   const fences=String.fromCharCode(96).repeat(3);
+   const content=raw.startsWith(fences)?raw.split('\n').slice(1,-1).join('\n').trim():raw;
+   const obj=JSON.parse(content);
+   if(!obj||!Array.isArray(obj.tasks)||obj.tasks.length<1||obj.tasks.length>50)throw Error(t('任务数量必须在1到50之间','タスク数は1～50件にしてください'));
+   const tasks=obj.tasks.map(x=>{
+    if(!x||typeof x.title!=='string'||!x.title.trim()||x.title.trim().length>200)throw Error(t('任务名称无效','タスク名が無効です'));
+    const n=x.plannedMinutes===null||x.plannedMinutes===undefined||x.plannedMinutes===''?null:Number(x.plannedMinutes);
+    if(n!==null&&(!Number.isFinite(n)||n<0||n>1440))throw Error(t('计划时间无效','予定時間が無効です'));
+    const start=x.start===null||x.start===undefined?'':x.start;
+    if(typeof start!=='string'||(start&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(start)))throw Error(t('开始时间请用HH:MM格式','開始時刻はHH:MMで入力してください'));
+    return {title:x.title.trim(),plannedMinutes:n,start};
+   });
+   draftImport=tasks;
+   $('mlImportPreview').textContent=t('请确认这些任务是否和之前讨论的一致：','以前相談した計画と一致するか確認してください：')+'\n'+tasks.map(x=>'· '+x.title+' / '+(x.start||t('未定','未定'))+' / '+(x.plannedMinutes===null?t('时长未记录','時間未記録'):x.plannedMinutes+t('分钟','分'))).join('\n');
+   $('mlImportPreview').style.whiteSpace='pre-line';$('mlApply').disabled=false;
+  }catch(e){$('mlImportPreview').textContent=t('预览失败：','プレビュー失敗：')+e.message}
+ };
+ $('mlApply').onclick=()=>{if(!draftImport)return;if(!confirm(t('确认将'+draftImport.length+'项任务加入今天？','今日のタスクに追加しますか？')))return;const d=get();const arr=d.daily[date()]||[];const now=Date.now();draftImport.forEach((x,i)=>arr.push({id:'import-'+now+'-'+i,mainlineId:selected,title:x.title,plannedMinutes:x.plannedMinutes,start:x.start,actualMinutes:null,status:'planned',notes:'',codeSnippets:[]}));d.daily[date()]=arr;if(safeSave(d)){draftImport=null;render()}};
 }
 function endOf(start,minutes){if(!start||minutes===null||minutes===undefined||!Number.isFinite(Number(minutes)))return '';const parts=start.split(':').map(Number);if(parts.length!==2||parts.some(Number.isNaN))return '';const n=(parts[0]*60+parts[1]+Number(minutes))%1440;return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')}
 function renderTasks(){
