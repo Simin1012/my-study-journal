@@ -67,6 +67,8 @@ function listen(){return new Promise(resolve=>server.listen(0,'127.0.0.1',()=>re
     await page.waitForFunction(()=>document.querySelector('label[for="arrive"]').textContent.trim()==='学習場所への到着時刻');
     assert.equal((await page.locator('label[for="arrive"]').textContent()).trim(),'学習場所への到着時刻');
     assert.equal((await page.locator('label[for="journalActual"]').textContent()).trim(),'朝の日記・実績（分）');
+    await page.waitForFunction(()=>document.querySelector('#taskList .task-card h3')?.textContent.includes('Java学習'));
+    assert.match(await page.locator('#taskList .task-card h3').first().textContent(),/Java学習 · \d+分/);
     await page.locator('.v2-nav button[data-page="plan"]').click();
     await page.waitForFunction(()=>[...document.querySelectorAll('#v2-plan h2')].some(x=>x.textContent==='標準時間'));
     assert.ok(await page.locator('#v2-plan h2').allTextContents().then(a=>a.includes('標準時間')));
@@ -77,6 +79,10 @@ function listen(){return new Promise(resolve=>server.listen(0,'127.0.0.1',()=>re
     assert.equal(await page.locator('#v2Language').inputValue(),'ja');
     assert.ok(await page.locator('#v2GlobalDate').isVisible(),'global date visible');
     await page.locator('#v2Language').selectOption('zh');
+    await page.locator('.v2-nav button[data-page="today"]').click();
+    await page.waitForFunction(()=>document.querySelector('label[for="arrive"]').textContent.trim()==='自习点到达时间');
+    await page.waitForFunction(()=>document.querySelector('#taskList .task-card h3')?.textContent.includes('Java学习'));
+    assert.match(await page.locator('#taskList .task-card h3').first().textContent(),/Java学习 · \d+分钟/);
     await page.locator('.v2-nav button[data-page="mainline"]').click();
     assert.ok(await page.locator('#mlImport').isVisible(),'AI plan import is directly visible');
     await page.locator('#mlImport').fill(JSON.stringify({tasks:[{title:'SQL查询练习',plannedMinutes:30}]}));
