@@ -313,12 +313,22 @@ function postBody(){
   lines.push(description(name,t.planned,t.actual,t.status));
   if(t.feeling.trim())feelings.push('· '+name+'：'+t.feeling.trim());
  });
+ // Include V2 mainline tasks without mutating original daily records.
+ const v2=window.MomoV2Storage?.read?.();
+ if(v2){
+  (v2.daily[current]||[]).forEach(t=>{
+   lines.push(description(t.title,t.plannedMinutes??'',t.actualMinutes??'',t.status));
+   if(t.notes?.trim())feelings.push('· '+t.title+'：'+t.notes.trim());
+  });
+  const extra=v2.reviews[current]||{};
+  if(extra.feeling?.trim())feelings.push(extra.feeling.trim());
+ }
  // The legacy routine checkboxes do not establish actual minutes.
  const jp=d.journalDone?'done':'planned',vp=d.vocabDone?'done':'planned';
  lines.unshift(description('背单词',plan.vocab,'',vp));
  lines.unshift(description('晨间日记',plan.journal,'',jp));
  const diary=d.morningJournal.trim()||'（当天晨间日记尚未填写）';
- const reflection=d.reflection.trim()||'（尚未填写）';
+ const reflection=d.reflection.trim()||(v2?.reviews?.[current]?.summary||'').trim()||'（尚未填写）';
  return '【晨间日记】\n'+diary+
  '\n\n【学习计划】\n'+lines.join('\n')+
  '\n\n【学习感想】\n'+(feelings.join('\n')||'（暂无学习感想记录）')+
