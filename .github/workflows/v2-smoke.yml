@@ -33,6 +33,8 @@ jobs:
           grep -q '学习与成长记录' /tmp/v2-preview.html
           curl -L -sS --max-time 20 -o /tmp/v2-enhancements.js -w 'Script status: %{http_code}, MIME: %{content_type}\\n' 'https://raw.githack.com/Simin1012/my-study-journal/v2-development/js/v2-enhancements.js'
           grep -q 'setupOverview' /tmp/v2-enhancements.js
+          curl -L -sS --fail --max-time 20 -o /tmp/v2-i18n.js 'https://raw.githack.com/Simin1012/my-study-journal/v2-development/js/i18n-v2.js'
+          grep -q 'translatePatterns' /tmp/v2-i18n.js
       - name: Upload screenshots on failure
         if: failure()
         uses: actions/upload-artifact@v4
